@@ -1,0 +1,20 @@
+version: '3.8'
+volumes:
+  duck-node_modules:
+    name: duck-node_modules
+    external: true
+services:
+  duckbot:
+    build: ./app
+    image: dead0duck/duckbot_pg
+    container_name: duckbot
+    ports:
+      - '80:80'
+      - '443:443'
+      - '4000:4000'
+    volumes:
+      - ./app:/home/container/app      
+      - duck-node_modules:/home/container/app/node_modules
+    env_file: ./app/.env
+    stdin_open: true
+    tty: true
