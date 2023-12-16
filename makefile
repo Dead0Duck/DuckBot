@@ -5,7 +5,7 @@ prepare:
 run:
 	@make stop
 	@make prepare
-	@docker compose up -d
+	@docker-compose up -d
 	@docker attach duckbot
 
 push:
@@ -15,7 +15,7 @@ build:
 	@docker-compose build --no-cache
 
 stop:
-	@docker compose down
+	@docker-compose down
 
 cleanup:
 	@make stop
