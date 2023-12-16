@@ -5,7 +5,7 @@ const bodyParser = require("body-parser")
 var certCreds = {key: process.env.SSL_KEY, cert: process.env.SSL_CERT};
 
 const app = express()
-const PORT = 3000
+const PORT = 443
 
 app.use(bodyParser.json())
 
