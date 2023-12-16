@@ -2,8 +2,6 @@
 
 source .env
 
-pm2 stop ecosystem.config.js
-
 if [ ! -z "$GIT_BRANCH" ]
 then
 	git checkout $GIT_BRANCH -f

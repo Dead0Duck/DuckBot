@@ -13,10 +13,8 @@ app.use(bodyParser.json())
 app.post("/webhooks/git_update", (req, res) => {
 	res.status(200).end()
 
-	process.on('SIGINT', () => {
-		console.info("Git updated, restarting")
-		process.exit(0)
-	})
+	console.info("Git updated, restarting")
+	process.exit(1);
 })
 
 var httpsServer = https.createServer(certCreds, app);
