@@ -5,17 +5,17 @@ prepare:
 run:
 	@make stop
 	@make prepare
-	@docker-compose up -d
+	@docker compose up -d
 	@docker attach duckbot
 
 push:
 	@docker push ghcr.io/dead0duck/duckbot_pg:latest
 
 build:
-	@docker-compose build --no-cache
+	@docker compose build --no-cache
 
 stop:
-	@docker-compose down
+	@docker compose down
 
 cleanup:
 	@make stop

@@ -3,6 +3,7 @@ const https = require("https")
 const bodyParser = require("body-parser")
 
 var certCreds = {key: process.env.SSL_KEY, cert: process.env.SSL_CERT};
+console.log(certCreds)
 
 const app = express()
 const PORT = 443
