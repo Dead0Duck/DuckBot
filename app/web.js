@@ -14,7 +14,7 @@ app.post("/webhooks/git_update", (req, res) => {
 	res.status(200).end()
 
 	console.info("Git updated, restarting")
-	process.exit(1);
+	process.exit(0);
 })
 
 var httpsServer = https.createServer(certCreds, app);

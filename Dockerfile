@@ -5,7 +5,6 @@ LABEL org.opencontainers.image.source https://github.com/dead0duck/duckbot_pg
 RUN apk update\
 	&& apk upgrade\
 	&& apk add git
-RUN npm install pm2 -g
 
 ARG GIT_TOKEN=$GIT_TOKEN
 
