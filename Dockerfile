@@ -17,6 +17,9 @@ RUN git config \
 
 # Install node_modules
 WORKDIR /home/container/app
+COPY ./app/package.json ./app/package-lock.json ./
+RUN npm ci --production
+
 
 EXPOSE 80
 EXPOSE 443
