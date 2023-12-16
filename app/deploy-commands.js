@@ -66,7 +66,7 @@ module.exports = (clientId) => {
 				{ body: commands },
 			) : await rest.put(
 				Routes.applicationCommands(clientId),
-				{ body: commands.filter(cmd) },
+				{ body: commands },
 			);
 
 			console.log(`Successfully reloaded ${data.length} application (/) commands.`);
