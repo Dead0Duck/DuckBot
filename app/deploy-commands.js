@@ -20,10 +20,10 @@ module.exports = (clientId) => {
 			const filePath = path.join(commandsPath, file);
 			const command = require(filePath);
 			if ('data' in command && 'execute' in command) {
-				if (!guildId && command.data.exclusive)
+				if (command.exclusive)
 				{
-					commandsExclusive[command.data.exclusive] = commandsExclusive[command.data.exclusive] || []
-					commandsExclusive[command.data.exclusive].push(command.data.toJSON());
+					commandsExclusive[command.exclusive] = commandsExclusive[command.exclusive] || []
+					commandsExclusive[command.exclusive].push(command.data.toJSON());
 				}
 				else
 					commands.push(command.data.toJSON());
@@ -46,17 +46,19 @@ module.exports = (clientId) => {
 				{ body: [] },
 			)
 
-			if (Object.keys(commandsExclusive).length > 0)
-			{
-				for (const [key, value] of Object.entries(commandsExclusive)) {
-					const guildData = await rest.put(
-						Routes.applicationGuildCommands(clientId, key),
-						{ body: value },
-					);
+			try {
+				if (Object.keys(commandsExclusive).length > 0)
+				{
+					for (const [key, value] of Object.entries(commandsExclusive)) {
+						const guildData = await rest.put(
+							Routes.applicationGuildCommands(clientId, key),
+							{ body: value },
+						);
 
-					console.log(`Successfully reloaded ${guildData.length} application (/) exclusive commands for guild ${key}.`);
-				};
-			}
+						console.log(`Successfully reloaded ${guildData.length} application (/) exclusive commands for guild ${key}.`);
+					};
+				}
+			} catch(e) {}
 
 			// The put method is used to fully refresh all commands in the guild with the current set
 			const data = guildId ? await rest.put(
