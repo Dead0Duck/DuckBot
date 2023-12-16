@@ -10,4 +10,4 @@ then
 fi
 
 npm i
-pm2-runtime ecosystem.config.js
+node index
