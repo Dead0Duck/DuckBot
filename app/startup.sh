@@ -2,11 +2,13 @@
 
 source .env
 
+pm2 stop ecosystem.config.js
+
 if [ ! -z "$GIT_BRANCH" ]
 then
 	git checkout $GIT_BRANCH -f
 	git reset HEAD --hard
-	git pull && pm2-runtime ecosystem.config.js
+	git pull
 fi
 
 npm i

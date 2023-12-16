@@ -3,7 +3,6 @@ const https = require("https")
 const bodyParser = require("body-parser")
 
 var certCreds = {key: process.env.SSL_KEY, cert: process.env.SSL_CERT};
-console.log(certCreds)
 
 const app = express()
 const PORT = 443
@@ -12,7 +11,6 @@ app.use(bodyParser.json())
 
 app.use(bodyParser.json())
 app.post("/webhooks/git_update", (req, res) => {
-	console.log('hiii')
 	res.status(200).end()
 
 	var cp = require('child_process');
