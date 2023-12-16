@@ -42,7 +42,7 @@ for (const file of eventFiles) {
 
 
 client.once(Events.ClientReady, readyClient => {
-	console.log(`Ready! Logged in as ${readyClient.user.tag}`);
+	console.log(`Ready! Looogged in as ${readyClient.user.tag}`);
 	require("./deploy-commands")(readyClient.user.id)
 });
 
