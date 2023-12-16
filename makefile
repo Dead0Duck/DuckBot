@@ -8,8 +8,11 @@ run:
 	@docker compose up -d
 	@docker attach duckbot
 
+push:
+	@docker push ghcr.io/dead0duck/duckbot_pg:latest
+
 build:
-	@docker build --no-cache --pull -t dead0duck/duckbot_pg:latest ./app
+	@docker-compose build --no-cache
 
 stop:
 	@docker compose down
