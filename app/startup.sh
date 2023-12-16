@@ -9,5 +9,5 @@ then
 	git pull && pm2-runtime ecosystem.config.js
 fi
 
-npm ci --production
+npm i
 pm2-runtime ecosystem.config.js
