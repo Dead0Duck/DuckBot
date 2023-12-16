@@ -12,7 +12,7 @@ push:
 	@docker push ghcr.io/dead0duck/duckbot:latest
 
 build:
-	@docker compose build --no-cache
+	@docker-compose build --no-cache
 
 stop:
 	@docker compose down

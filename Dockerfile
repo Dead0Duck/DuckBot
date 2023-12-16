@@ -14,11 +14,7 @@ RUN git config \
 	url."https://${GIT_TOKEN}@github.com".insteadOf \
 	"https://github.com"
 
-# Install node_modules
+EXPOSE 80 443 4000
+
 WORKDIR /home/container/app
-
-EXPOSE 80
-EXPOSE 443
-EXPOSE 4000
-
 CMD /bin/sh startup.sh

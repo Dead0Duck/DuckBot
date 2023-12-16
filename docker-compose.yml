@@ -13,13 +13,13 @@ services:
         GIT_TOKEN: $GIT_TOKEN
     image:  ghcr.io/dead0duck/duckbot
     container_name: duckbot
+    volumes:
+      - .:/home/container
+      - duck-node_modules:/home/container/app/node_modules
     ports:
       - '80:80'
       - '443:443'
       - '4000:4000'
-    volumes:
-      - ./:/home/container/
-      - duck-node_modules:/home/container/app/node_modules
     stdin_open: true
     tty: true
     restart: always
