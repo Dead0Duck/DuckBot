@@ -9,7 +9,7 @@ run:
 	@docker attach duckbot
 
 push:
-	@docker push ghcr.io/dead0duck/duckbot_pg:latest
+	@docker push ghcr.io/dead0duck/duckbot:latest
 
 build:
 	@docker compose build --no-cache
@@ -19,7 +19,7 @@ stop:
 
 cleanup:
 	@make stop
-	@docker image rm dead0duck/duckbot_pg
+	@docker image rm dead0duck/duckbot
 
 attach:
 	@docker logs -n 100 duckbot

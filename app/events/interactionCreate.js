@@ -11,6 +11,10 @@ module.exports = {
 			return;
 		}
 
+		if (!process.env.GUILD_ID && command.exclusive && command.exclusive != interaction.guildId) {
+			return false;
+		}
+
 		try {
 			await command.execute(interaction);
 		} catch (error) {

@@ -11,15 +11,29 @@ services:
       context: .
       args:
         GIT_TOKEN: $GIT_TOKEN
-    image:  ghcr.io/dead0duck/duckbot_pg
+    image:  ghcr.io/dead0duck/duckbot
     container_name: duckbot
     ports:
       - '80:80'
       - '443:443'
       - '4000:4000'
     volumes:
-      - .:/home/container
+      - ./:/home/container/
       - duck-node_modules:/home/container/app/node_modules
     stdin_open: true
     tty: true
     restart: always
+    networks:
+      - node-network
+#  duckbot-db:
+#    container_name: duckbot-db
+#    image: mongo
+#    restart: always
+#    volumes:
+#        - './data:/data/db'          
+#    ports:
+#         - "27017:27017"
+
+networks:
+  node-network:
+    driver: bridge

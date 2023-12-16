@@ -1,6 +1,6 @@
 FROM node:18-alpine
 LABEL author="DeadDuck"
-LABEL org.opencontainers.image.source https://github.com/dead0duck/duckbot_pg
+LABEL org.opencontainers.image.source https://github.com/dead0duck/duckbot
 
 RUN apk update\
 	&& apk upgrade\
