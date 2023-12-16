@@ -46,4 +46,5 @@ client.once(Events.ClientReady, readyClient => {
 	require("./deploy-commands")(readyClient.user.id)
 });
 
+require('./webhooks')
 client.login(token);
