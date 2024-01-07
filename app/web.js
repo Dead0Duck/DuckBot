@@ -2,6 +2,11 @@ const crypto = require('crypto')
 const express = require("express")
 const https = require("https")
 const bodyParser = require("body-parser")
+const autoUpdBranch = process.env.GIT_BRANCH
+
+// Return if we don't have git branch for autoupdate
+if (!autoUpdBranch || autoUpdBranch == "")
+	return;
 
 var certCreds = {key: process.env.SSL_KEY, cert: process.env.SSL_CERT};
 
