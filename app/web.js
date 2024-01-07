@@ -38,6 +38,8 @@ app.use(bodyParser.json())
 app.post("/webhooks/git_update", verifyPostData, (req, res) => {
 	res.status(200).end()
 
+	//TODO: Выключать бота только при изменениях в ветке авто-апдейта.
+
 	console.info("Git updated, restarting")
 	process.exit(0);
 })

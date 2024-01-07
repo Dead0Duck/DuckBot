@@ -21,6 +21,7 @@ async function GetVoiceChannelFromText(channel)
 	return await channel.guild.channels.fetch(channel.topic)
 }
 
+// TODO: Сделать меню рабочим
 async function UpdateMenu(channel, voiceChannel)
 {
 	voiceChannel = voiceChannel || await GetVoiceChannelFromText(channel)
