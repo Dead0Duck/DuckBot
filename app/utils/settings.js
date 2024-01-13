@@ -1,6 +1,9 @@
 const { ButtonBuilder, ButtonStyle, ActionRowBuilder, EmbedBuilder } = require('discord.js');
 
-function settingsComponents(guildSettings, guildName, guildIconURL) {
+function settingsComponents(guildSettings, guild, guildId = "") {
+    const guildName = guild.name
+    const guildIconURL = guild.iconURL()
+
     const embed = new EmbedBuilder()
         .setTitle("Настройки")
         .setAuthor({ name: guildName, iconURL: guildIconURL })
@@ -9,13 +12,14 @@ function settingsComponents(guildSettings, guildName, guildIconURL) {
             value: `${typeof guildSettings.PartiesChannel === 'undefined' ? "не указан" : `<#${guildSettings.PartiesChannel}>`}`,
             inline: true
         });
+
     const partiesChannelbtn = new ButtonBuilder()
-        .setCustomId('setting_0')
+        .setCustomId('setting_0' + (guildId.length !== 0 ? `:${guildId}` : ""))
         .setLabel('Указать форум для поиска компаний')
         .setStyle(ButtonStyle.Secondary)
 
     const delPartiesChannelbtn = new ButtonBuilder()
-        .setCustomId('delete_0')
+        .setCustomId('delete_0' + (guildId.length !== 0 ? `:${guildId}` : ""))
         .setLabel('Удалить форум для поиска компаний')
         .setStyle(ButtonStyle.Danger)
         .setDisabled(typeof guildSettings.PartiesChannel === 'undefined' ? true : false)

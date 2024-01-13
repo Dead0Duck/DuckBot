@@ -6,10 +6,13 @@ module.exports = {
 
 		if (!interaction.isChatInputCommand()) {
 			const { GuildSchema } = process.mongo;
+			const customId = interaction.customId.split(":")
+			const guildId = (customId.length > 1 ? customId[1] : interaction.guild.id)
 
 			if (interaction.customId.includes("setting")) {
-				switch (interaction.customId) {
+				switch (customId[0]) {
 					case "setting_0":
+						// TODO: решить проблему с пустым списком в ЛС
 						const channelSelect = new ChannelSelectMenuBuilder()
 							.setCustomId("apply_0")
 							.setChannelTypes(ChannelType.GuildForum)
@@ -22,9 +25,9 @@ module.exports = {
 
 			if (interaction.customId.includes("apply")) {
 
-				switch (interaction.customId) {
+				switch (customId[0]) {
 					case "apply_0":
-						await GuildSchema.updateOne({ Guild: interaction.guild.id }, { $set: { "Settings.PartiesChannel": interaction.values[0] } })
+						await GuildSchema.updateOne({ Guild: guildId }, { $set: { "Settings.PartiesChannel": interaction.values[0] } })
 						await interaction.update({ content: "Параметр установлен.", ephemeral: true, components: [] })
 						return
 				}
@@ -32,9 +35,9 @@ module.exports = {
 
 			if (interaction.customId.includes("delete")) {
 
-				switch (interaction.customId) {
+				switch (customId[0]) {
 					case "delete_0":
-						await GuildSchema.updateOne({ Guild: interaction.guild.id }, { $unset: { "Settings.PartiesChannel": "" } })
+						await GuildSchema.updateOne({ Guild: guildId }, { $unset: { "Settings.PartiesChannel": "" } })
 						await interaction.update({ content: "Параметр удален.", ephemeral: true, embeds: [], components: [] })
 						return
 				}

@@ -12,7 +12,7 @@ module.exports = {
         const guildId = interaction.guild.id
         const guildData = await GuildSchema.findOne({ Guild: guildId })
 
-        const { embed, firstRow, secondRow } = settingsComponents(guildData.Settings, interaction.guild.name, interaction.guild.iconURL())
+        const { embed, firstRow, secondRow } = settingsComponents(guildData.Settings, interaction.guild)
 
         await interaction.reply({ embeds: [embed], components: [firstRow, secondRow], ephemeral: true })
     },
