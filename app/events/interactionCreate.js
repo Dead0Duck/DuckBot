@@ -28,9 +28,7 @@ module.exports = {
 										.setLabel(channel.name)
 										.setValue(channel.id)
 								)
-								console.log(channel.name, channel.id)
 							})
-							console.log(channelSelect)
 						}
 						const firstRow = new ActionRowBuilder().addComponents(channelSelect)
 						await interaction.update({ content: "Укажите форум для поиска компаний.", components: [firstRow], ephemeral: true, embeds: [] })
