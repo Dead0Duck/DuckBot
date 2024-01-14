@@ -5,7 +5,8 @@ module.exports = {
     data: new SlashCommandBuilder()
         .setName('settings')
         .setDescription('Настройки сервера.')
-        .setDefaultMemberPermissions(0),
+        .setDefaultMemberPermissions(0)
+        .setDMPermission(false),
     async execute(interaction) {
         const { GuildSchema } = process.mongo;
 
