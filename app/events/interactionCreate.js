@@ -1,4 +1,4 @@
-const { ActionRowBuilder, Events, ButtonBuilder, ButtonStyle, ChannelSelectMenuBuilder, ChannelType } = require('discord.js');
+const { ActionRowBuilder, Events, ButtonBuilder, ButtonStyle, ChannelSelectMenuBuilder, ChannelType, StringSelectMenuBuilder, StringSelectMenuOptionBuilder } = require('discord.js');
 
 module.exports = {
 	name: Events.InteractionCreate,
@@ -12,11 +12,26 @@ module.exports = {
 			if (interaction.customId.includes("setting")) {
 				switch (customId[0]) {
 					case "setting_0":
-						// TODO: решить проблему с пустым списком в ЛС
-						const channelSelect = new ChannelSelectMenuBuilder()
-							.setCustomId("apply_0")
-							.setChannelTypes(ChannelType.GuildForum)
-							.setMaxValues(1)
+						const channelSelect = (customId.length < 2 ? new ChannelSelectMenuBuilder() : new StringSelectMenuBuilder())
+						if (customId.length < 2) {
+							channelSelect
+								.setCustomId("apply_0")
+								.setChannelTypes(ChannelType.GuildForum)
+								.setMaxValues(1)
+						} else {
+							channelSelect
+								.setCustomId("apply_0:" + guildId)
+								.setMaxValues(1)
+							interaction.client.guilds.resolve(guildId).channels.cache.filter(x => x.isThreadOnly()).map((channel) => {
+								channelSelect.addOptions(
+									new StringSelectMenuOptionBuilder()
+										.setLabel(channel.name)
+										.setValue(channel.id)
+								)
+								console.log(channel.name, channel.id)
+							})
+							console.log(channelSelect)
+						}
 						const firstRow = new ActionRowBuilder().addComponents(channelSelect)
 						await interaction.update({ content: "Укажите форум для поиска компаний.", components: [firstRow], ephemeral: true, embeds: [] })
 						return
