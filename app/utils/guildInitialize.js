@@ -27,7 +27,8 @@ async function VoiceChannel(guild) {
 			VoiceTextCategory: voiceTexCat.id,
 			VoiceCreate: voiceCreateChn.id,
 			VoiceCreateClosed: voiceCreateCloseChn.id,
-			Settings: { Version: 1 }
+			Settings: { Version: 1 },
+			FirstJoin: guild.joinedAt
 		})
 
 		// let owner = await guild.fetchOwner()

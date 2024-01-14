@@ -9,15 +9,19 @@ module.exports = {
         const guildData = await GuildSchema.findOne({ Guild: guild.id })
         const { embed, firstRow, secondRow } = settingsComponents(guildData.Settings, guild, guild.id)
 
-        guild.fetchOwner().then((owner) => {
-            owner.send(
-                {
-                    // TODO: написать нормальное приветствие 
-                    content: "Hello!",
-                    embeds: [embed],
-                    components: [firstRow, secondRow]
-                }
-            )
-        })
+        if (typeof guildData.FirstJoin === 'undefined') {
+            await GuildSchema.updateOne({ Guild: guild.id }, { $set: { "FirstJoin": new Date() } })
+
+            guild.fetchOwner().then((owner) => {
+                owner.send(
+                    {
+                        // TODO: написать нормальное приветствие 
+                        content: "Hello!",
+                        embeds: [embed],
+                        components: [firstRow, secondRow]
+                    }
+                )
+            })
+        }
     }
 }
