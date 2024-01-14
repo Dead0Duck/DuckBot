@@ -18,18 +18,17 @@ function settingsComponents(guildSettings, guild, guildId = "") {
         .setLabel('Указать форум для поиска компаний')
         .setStyle(ButtonStyle.Secondary)
 
-    const delPartiesChannelbtn = new ButtonBuilder()
-        .setCustomId('delete_0' + (guildId.length !== 0 ? `:${guildId}` : ""))
-        .setLabel('Удалить форум для поиска компаний')
+    const deleteSettings = new ButtonBuilder()
+        .setCustomId('void' + (guildId.length !== 0 ? `:${guildId}` : ""))
+        .setLabel('Удалить параметр')
         .setStyle(ButtonStyle.Danger)
-        .setDisabled(typeof guildSettings.PartiesChannel === 'undefined' ? true : false)
 
 
     const firstRow = new ActionRowBuilder()
         .addComponents(partiesChannelbtn);
 
     const secondRow = new ActionRowBuilder()
-        .addComponents(delPartiesChannelbtn)
+        .addComponents(deleteSettings)
 
     return { embed, firstRow, secondRow }
 }
