@@ -12,6 +12,7 @@ module.exports = {
 		const guildId = customId[customId.length - 1]
 		const firstRow = new ActionRowBuilder()
 		const setting = Settings.Data[parseInt(customId[2])]
+		const guildData = await GuildSchema.findOne({ Guild: guildId })
 
 		switch (customId[1]) {
 			case "prop":
@@ -61,15 +62,19 @@ module.exports = {
 
 			case "delete":
 				const prop = "Settings." + interaction.values[0]
-				await GuildSchema.updateOne({ Guild: guildId }, { $unset: { [prop]: "" } })
-				await interaction.update({ content: "Параметр удален.", ephemeral: true, embeds: [], components: [] })
-				Settings.Data.find((setting) => {
-					return setting.field === interaction.values[0]
-				}).onDelete(interaction, guildId)
-				return
+				if (typeof guildData.Settings[interaction.values[0]] === 'undefined') {
+					await interaction.update({ content: "Параметр уже удален.", ephemeral: true, embeds: [], components: [] })
+					return
+				} else {
+					await GuildSchema.updateOne({ Guild: guildId }, { $unset: { [prop]: "" } })
+					await interaction.update({ content: "Параметр удален.", ephemeral: true, embeds: [], components: [] })
+					Settings.Data.find((setting) => {
+						return setting.field === interaction.values[0]
+					}).onDelete(interaction, guildId)
+					return
+				}
 
 			case "void":
-				const guildData = await GuildSchema.findOne({ Guild: guildId })
 				const options = new StringSelectMenuBuilder()
 					.setCustomId(`${interId}:delete:${guildId}`)
 					.setMaxValues(1)
