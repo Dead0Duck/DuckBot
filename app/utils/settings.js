@@ -5,11 +5,15 @@ class BaseSetting {
      * @param {string} label - Название параметра.
      * @param {string} field - Название параметра в БД.
      * @param {string} description - Описание параметра.
+     * @param {function (interaction, guildId)} onSuccess - Функция, которая выполняется при успешном апдейте параметра.
+     * @param {function (interaction, guildId)} onDelete - Функция, которая выполняется при успешном удалении параметра.
      */
-    constructor(label, field, description) {
+    constructor(label, field, description, onSuccess = () => { }, onDelete = () => { }) {
         this.label = label
         this.field = field
         this.description = description
+        this.onSuccess = onSuccess
+        this.onDelete = onDelete
     }
 }
 /**
@@ -22,9 +26,11 @@ class BooleanSetting extends BaseSetting {
      * @param {string} description - Описание параметра.
      * @param {string} trueLabel - Подпись кнопки true.
      * @param {string} falseLabel - Подпись кнопки false.
+     * @param {function (value, interaction, guildId)} onSuccess - Функция, которая выполняется при успешном апдейте параметра.
+     * @param {function (interaction, guildId)} onDelete - Функция, которая выполняется при успешном удалении параметра.
      */
-    constructor(label, field, description, trueLabel, falseLabel) {
-        super(label, field, description)
+    constructor(label, field, description, trueLabel, falseLabel, onSuccess = () => { }, onDelete = () => { }) {
+        super(label, field, description, onSuccess, onDelete)
         this.trueLabel = trueLabel
         this.falseLabel = falseLabel
         this.type = 'bool'
@@ -51,9 +57,11 @@ class SelectStringSetting extends BaseSetting {
      * @param {string} description - Описание параметра.
      * @param {function (interaction, guildId): StringSelectMenuBuilder} component - Функция, возвращающая `StringSelectMenuBuilder`
      * @param {function (guildSettings): string} value - Функция, возвращающая string для отображения в embed.
+     * @param {function (interaction, guildId)} onSuccess - Функция, которая выполняется при успешном апдейте параметра.
+     * @param {function (interaction, guildId)} onDelete - Функция, которая выполняется при успешном удалении параметра.
      */
-    constructor(label, field, description, component, value) {
-        super(label, field, description)
+    constructor(label, field, description, component, value, onSuccess = () => { }, onDelete = () => { }) {
+        super(label, field, description, onSuccess, onDelete)
         this.component = component
         this.value = value
         this.type = 'selectString'
@@ -74,9 +82,11 @@ class TextInputSetting extends BaseSetting {
      * @param {function (interaction, guildId)} modal - Функция, возвращающая `ModalBuilder`
      * @param {function (guildSettings)} value - Функция, возвращающая string для отображения в embed.
      * @param {function (interaction)} validate - Функция, которая вызывается для проверки введённых данных. Если всё в порядке, то возвращает 0, а если нет, то должна вернуть string с описанием ошибки.
+     * @param {function (interaction, guildId)} onSuccess - Функция, которая выполняется при успешном апдейте параметра.
+     * @param {function (interaction, guildId)} onDelete - Функция, которая выполняется при успешном удалении параметра.
      */
-    constructor(label, field, modal, value, validate = () => { return 0 }) {
-        super(label, field)
+    constructor(label, field, modal, value, validate = () => { return 0 }, onSuccess = () => { }, onDelete = () => { }) {
+        super(label, field, onSuccess, onDelete)
         this.modal = modal
         this.value = value
         this.validate = validate
@@ -104,7 +114,10 @@ const Settings = [
         }
     ),
 
-    new BooleanSetting("Хот-дог", "TestBoolean", "Вы хотите хот-дог?", "Да, очень хочу", "Нет, спасибо, я веган"),
+    new BooleanSetting("Хот-дог", "TestBoolean", "Вы хотите хот-дог?", "Да, очень хочу", "Нет, спасибо, я веган",
+        (value, interaction) => { interaction.followUp({ content: value === 'true' ? "🌭" : "Ок, мне больше достанется.", ephemeral: true }) },
+        (interaction) => { interaction.followUp("Печально, что вы так с хот-догом поступаете.") }),
+
     new TextInputSetting("Любимая еда", "FavFood", () => {
         return new ModalBuilder({
             title: "Любимая еда", components: [

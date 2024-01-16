@@ -42,6 +42,7 @@ module.exports = {
 							content = `Произошла ошибка:\n\`\`\`${validate}\`\`\``
 						} else {
 							await GuildSchema.updateOne({ Guild: guildId }, { $set: { [`Settings.${setting.field}`]: interaction.fields.fields.size > 1 ? interaction.fields.fields.map((x) => { x.value }) : interaction.fields.fields.first().value } })
+							setting.onSuccess(interaction, guildId)
 							content = `Параметр установлен.`
 						}
 						await interaction.reply({ content: content, ephemeral: true, components: [] })
@@ -49,10 +50,12 @@ module.exports = {
 					case "selectString":
 						await GuildSchema.updateOne({ Guild: guildId }, { $set: { [`Settings.${setting.field}`]: interaction.values.length > 1 ? interaction.values : interaction.values[0] } })
 						await interaction.update({ content: "Параметр установлен", ephemeral: true, components: [] })
+						setting.onSuccess(interaction, guildId)
 						return
 					case "bool":
 						await GuildSchema.updateOne({ Guild: guildId }, { $set: { [`Settings.${setting.field}`]: customId[3] === 'true' ? true : false } })
 						await interaction.update({ content: "Параметр установлен", ephemeral: true, components: [] })
+						setting.onSuccess(customId[3], interaction, guildId)
 						return
 				}
 
@@ -60,6 +63,9 @@ module.exports = {
 				const prop = "Settings." + interaction.values[0]
 				await GuildSchema.updateOne({ Guild: guildId }, { $unset: { [prop]: "" } })
 				await interaction.update({ content: "Параметр удален.", ephemeral: true, embeds: [], components: [] })
+				Settings.Data.find((setting) => {
+					return setting.field === interaction.values[0]
+				}).onDelete(interaction, guildId)
 				return
 
 			case "void":
