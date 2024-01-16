@@ -69,18 +69,26 @@ module.exports = {
 				return
 
 			case "void":
+				const guildData = await GuildSchema.findOne({ Guild: guildId })
 				const options = new StringSelectMenuBuilder()
 					.setCustomId(`${interId}:delete:${guildId}`)
 					.setMaxValues(1)
 
 				Settings.Data.forEach((setting) => {
-					options.addOptions(new StringSelectMenuOptionBuilder()
-						.setLabel(setting.label)
-						.setValue(setting.field))
+					if (typeof guildData.Settings[setting.field] !== 'undefined')
+						options.addOptions(new StringSelectMenuOptionBuilder()
+							.setLabel(setting.label)
+							.setValue(setting.field))
 				})
-				firstRow.addComponents(options)
-				await interaction.reply({ content: "Укажите параметр для удаления", components: [firstRow], embeds: [], ephemeral: true })
-				return
+				if (options.options.length === 0) {
+					await interaction.reply({ content: "Нечего удалять.", ephemeral: true })
+					return
+				} else {
+					firstRow.addComponents(options)
+					await interaction.reply({ content: "Укажите параметр для удаления", components: [firstRow], embeds: [], ephemeral: true })
+					return
+				}
+
 		}
 	},
 }
