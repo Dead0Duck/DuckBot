@@ -67,7 +67,7 @@ module.exports = {
 					.setCustomId(`${interId}:delete:${guildId}`)
 					.setMaxValues(1)
 
-				Settings.forEach((setting) => {
+				Settings.Data.forEach((setting) => {
 					options.addOptions(new StringSelectMenuOptionBuilder()
 						.setLabel(setting.label)
 						.setValue(setting.field))
@@ -75,6 +75,6 @@ module.exports = {
 				firstRow.addComponents(options)
 				await interaction.reply({ content: "Укажите параметр для удаления", components: [firstRow], embeds: [], ephemeral: true })
 				return
-			}
+		}
 	},
 }
