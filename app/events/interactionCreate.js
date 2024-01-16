@@ -1,64 +1,12 @@
-const { ActionRowBuilder, Events, ButtonBuilder, ButtonStyle, ChannelSelectMenuBuilder, ChannelType, StringSelectMenuBuilder, StringSelectMenuOptionBuilder } = require('discord.js');
+const { Events } = require('discord.js');
+const { Settings } = require('../utils')
 
 module.exports = {
 	name: Events.InteractionCreate,
 	execute: async (interaction) => {
 
 		if (!interaction.isChatInputCommand()) {
-			const { GuildSchema } = process.mongo;
-			const customId = interaction.customId.split(":")
-			const guildId = (customId.length > 1 ? customId[1] : interaction.guild.id)
-			const firstRow = new ActionRowBuilder()
-
-			switch (customId[0]) {
-				case "setting_0":
-					const channelSelect = (customId.length < 2 ? new ChannelSelectMenuBuilder() : new StringSelectMenuBuilder())
-					if (customId.length < 2) {
-						channelSelect
-							.setCustomId("apply_0")
-							.setChannelTypes(ChannelType.GuildForum)
-							.setMaxValues(1)
-					} else {
-						channelSelect
-							.setCustomId("apply_0:" + guildId)
-							.setMaxValues(1)
-						interaction.client.guilds.resolve(guildId).channels.cache.filter(x => x.isThreadOnly()).map((channel) => {
-							channelSelect.addOptions(
-								new StringSelectMenuOptionBuilder()
-									.setLabel(channel.name)
-									.setValue(channel.id)
-							)
-						})
-					}
-					firstRow.addComponents(channelSelect)
-					await interaction.update({ content: "Укажите форум для поиска компаний.", components: [firstRow], ephemeral: true, embeds: [] })
-					return
-
-				case "apply_0":
-					await GuildSchema.updateOne({ Guild: guildId }, { $set: { "Settings.PartiesChannel": interaction.values[0] } })
-					await interaction.update({ content: "Параметр установлен.", ephemeral: true, components: [] })
-					return
-
-				case "delete":
-					switch (interaction.values[0]) {
-						case "PartyChannel":
-							await GuildSchema.updateOne({ Guild: guildId }, { $unset: { "Settings.PartiesChannel": "" } })
-							await interaction.update({ content: "Параметр удален.", ephemeral: true, embeds: [], components: [] })
-							return
-					}
-
-				case "void":
-					firstRow.addComponents(new StringSelectMenuBuilder()
-						.setCustomId("delete")
-						.setMaxValues(1)
-						.addOptions([
-							new StringSelectMenuOptionBuilder()
-								.setLabel("Форум для поиска компаний")
-								.setValue("PartyChannel")
-						]))
-					await interaction.update({ content: "Укажите параметр для удаления", components: [firstRow], embeds: [], ephemeral: true })
-			}
-
+			Settings.Interactions(interaction)
 		};
 		const command = interaction.client.commands.get(interaction.commandName);
 

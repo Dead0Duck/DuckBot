@@ -1,5 +1,5 @@
 const { Events } = require('discord.js')
-const { settingsComponents } = require('../utils/settings')
+const { Settings } = require('../utils')
 
 module.exports = {
     name: Events.GuildCreate,
@@ -7,7 +7,7 @@ module.exports = {
         const { GuildSchema } = process.mongo;
 
         const guildData = await GuildSchema.findOne({ Guild: guild.id })
-        const { embed, firstRow, secondRow } = settingsComponents(guildData.Settings, guild, guild.id)
+        const { embed, rows } = Settings.Components(guildData.Settings, guild)
 
         if (typeof guildData.FirstJoin === 'undefined') {
             await GuildSchema.updateOne({ Guild: guild.id }, { $set: { "FirstJoin": new Date() } })
@@ -18,7 +18,7 @@ module.exports = {
                         // TODO: написать нормальное приветствие 
                         content: "Hello!",
                         embeds: [embed],
-                        components: [firstRow, secondRow]
+                        components: rows
                     }
                 )
             })

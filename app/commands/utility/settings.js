@@ -1,5 +1,5 @@
 const { SlashCommandBuilder } = require('discord.js');
-const { settingsComponents } = require('../../utils/settings')
+const { Settings } = require('../../utils')
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -13,8 +13,8 @@ module.exports = {
         const guildId = interaction.guild.id
         const guildData = await GuildSchema.findOne({ Guild: guildId })
 
-        const { embed, firstRow, secondRow } = settingsComponents(guildData.Settings, interaction.guild)
+        const { embed, rows } = Settings.Components(guildData.Settings, interaction.guild)
 
-        await interaction.reply({ embeds: [embed], components: [firstRow, secondRow], ephemeral: true })
+        await interaction.reply({ embeds: [embed], components: rows, ephemeral: true })
     },
 };
