@@ -30,8 +30,8 @@ class BooleanSetting extends BaseSetting {
         this.type = 'bool'
     }
     components(index, guildId) {
-        return [new ButtonBuilder().setLabel(this.trueLabel).setStyle(ButtonStyle.Success).setCustomId(`apply:${index}:true:${guildId}`),
-        new ButtonBuilder().setLabel(this.falseLabel).setStyle(ButtonStyle.Danger).setCustomId(`apply:${index}:false:${guildId}`)]
+        return [new ButtonBuilder().setLabel(this.trueLabel).setStyle(ButtonStyle.Success).setCustomId(`st:apply:${index}:true:${guildId}`),
+        new ButtonBuilder().setLabel(this.falseLabel).setStyle(ButtonStyle.Danger).setCustomId(`st:apply:${index}:false:${guildId}`)]
     }
     value(guildSettings) {
         return `${typeof guildSettings[this.field] === 'undefined' ? "не указан" : `${guildSettings[this.field] === true ? "Да" : "Нет"}`} `
@@ -49,8 +49,8 @@ class SelectStringSetting extends BaseSetting {
      * @param {string} label - Название параметра.
      * @param {string} field - Название параметра в базе данных
      * @param {string} description - Описание параметра.
-     * @param {function (interaction, guildId)} component - Функция, возвращающая `StringSelectMenuBuilder`
-     * @param {function (guildSettings)} value - Функция, возвращающая string для отображения в embed.
+     * @param {function (interaction, guildId): StringSelectMenuBuilder} component - Функция, возвращающая `StringSelectMenuBuilder`
+     * @param {function (guildSettings): string} value - Функция, возвращающая string для отображения в embed.
      */
     constructor(label, field, description, component, value) {
         super(label, field, description)
@@ -134,7 +134,7 @@ function Components(guildSettings, guild) {
 
     Settings.forEach((setting, index) => {
         buttons.push(new ButtonBuilder()
-            .setCustomId(`setting:${index}:${guildId}`)
+            .setCustomId(`st:prop:${index}:${guildId}`)
             .setLabel(setting.label)
             .setStyle(ButtonStyle.Secondary)
         )
@@ -146,7 +146,6 @@ function Components(guildSettings, guild) {
     })
 
     const groupButtons = chunk(buttons, 5)
-
     if (groupButtons.length > 4) {
         console.log("Достигнуто максимальное количество Action Rows.")
     } else {
@@ -158,7 +157,7 @@ function Components(guildSettings, guild) {
     }
 
     const deleteSettings = new ButtonBuilder()
-        .setCustomId("void:" + guildId)
+        .setCustomId("st:void:" + guildId)
         .setLabel('Удалить параметр')
         .setStyle(ButtonStyle.Danger)
     const deleteRow = new ActionRowBuilder()
@@ -171,82 +170,4 @@ function Components(guildSettings, guild) {
     }
 }
 
-async function Interactions(interaction) {
-    const { GuildSchema } = process.mongo;
-
-
-    const customId = interaction.customId.split(":")
-    if (customId.length < 2) { return }
-    const guildId = customId[customId.length - 1]
-    const firstRow = new ActionRowBuilder()
-    const setting = Settings[parseInt(customId[1])]
-    const guildData = await GuildSchema.findOne({ Guild: guildId })
-
-    switch (customId[0]) {
-        case "setting":
-            let component
-            switch (setting.type) {
-                case "bool":
-                    component = setting.components(customId[1], guildId)
-                    firstRow.addComponents(component)
-                    await interaction.reply({ content: setting.description, components: [firstRow], ephemeral: true })
-                    return
-                case "selectString":
-                    component = setting.component(interaction, guildId).setCustomId(`apply:${customId[1]}:${guildId}`)
-                    firstRow.addComponents(component)
-                    await interaction.reply({ content: setting.description, components: [firstRow], ephemeral: true })
-                    return
-                case "textInput":
-                    const modal = setting.modal(interaction, guildId).setCustomId(`apply:${customId[1]}:${guildId}`)
-                    await interaction.showModal(modal)
-                    return
-            }
-
-        case "apply":
-            switch (setting.type) {
-                case "textInput":
-                    let content = ""
-                    const validate = setting.validate(interaction)
-                    if (validate !== 0) {
-                        content = `Произошла ошибка:\n\`\`\`${validate}\`\`\``
-                    } else {
-                        await GuildSchema.updateOne({ Guild: guildId }, { $set: { [`Settings.${setting.field}`]: interaction.fields.fields.size > 1 ? interaction.fields.fields.map((x) => { x.value }) : interaction.fields.fields.first().value } })
-                        content = `Параметр установлен.`
-                    }
-                    await interaction.reply({ content: content, ephemeral: true, components: [] })
-                    return
-                case "selectString":
-                    await GuildSchema.updateOne({ Guild: guildId }, { $set: { [`Settings.${setting.field}`]: interaction.values.length > 1 ? interaction.values : interaction.values[0] } })
-                    await interaction.update({ content: "Параметр установлен", ephemeral: true, components: [] })
-                    return
-                case "bool":
-                    await GuildSchema.updateOne({ Guild: guildId }, { $set: { [`Settings.${setting.field}`]: customId[2] === 'true' ? true : false } })
-                    await interaction.update({ content: "Параметр установлен", ephemeral: true, components: [] })
-                    return
-            }
-
-        case "delete":
-            const prop = "Settings." + interaction.values[0]
-            await GuildSchema.updateOne({ Guild: guildId }, { $unset: { [prop]: "" } })
-            await interaction.update({ content: "Параметр удален.", ephemeral: true, embeds: [], components: [] })
-            return
-
-        case "void":
-            const options = new StringSelectMenuBuilder()
-                .setCustomId(`delete:${guildId}`)
-                .setMaxValues(1)
-
-            Settings.forEach((setting) => {
-                options.addOptions(new StringSelectMenuOptionBuilder()
-                    .setLabel(setting.label)
-                    .setValue(setting.field))
-            })
-            firstRow.addComponents(options)
-            await interaction.reply({ content: "Укажите параметр для удаления", components: [firstRow], embeds: [], ephemeral: true })
-            return
-    }
-}
-
-
-
-module.exports = { Components, Interactions }
+module.exports = { Data: Settings, Components }

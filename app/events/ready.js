@@ -15,12 +15,7 @@ module.exports = {
 		const guilds = client.guilds.cache.map(guild => guild);
 		guilds.forEach(async guild => {
 			try {
-				const data = await GuildSchema.findOne({ Guild: guild.id })
-				if (data)
-					return
-			
 				await GuildInitialize.All(guild)
-				console.log(`Initializing new server ${guild.id}.`);
 			} catch(e) {
 				console.error(e)
 			}

@@ -15,7 +15,6 @@ const client = new Client({ intents: [
 client.commands = new Collection();
 const commandFoldersPath = path.join(__dirname, 'commands');
 const commandFolders = fs.readdirSync(commandFoldersPath);
-
 for (const folder of commandFolders) {
 	const commandsPath = path.join(commandFoldersPath, folder);
 	const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
@@ -33,7 +32,6 @@ for (const folder of commandFolders) {
 
 const eventsPath = path.join(__dirname, 'events');
 const eventFiles = fs.readdirSync(eventsPath).filter(file => file.endsWith('.js'));
-
 for (const file of eventFiles) {
 	const filePath = path.join(eventsPath, file);
 	const event = require(filePath);
@@ -43,6 +41,22 @@ for (const file of eventFiles) {
 		client.on(event.name, (...args) => event.execute(...args));
 	}
 }
+
+
+client.interactions = new Collection();
+const interactionsPath = path.join(__dirname, 'interactions');
+const interactionsFiles = fs.readdirSync(interactionsPath).filter(file => file.endsWith('.js'));
+for (const file of interactionsFiles) {
+	const filePath = path.join(interactionsPath, file);
+	const interaction = require(filePath);
+	
+	if ('id' in interaction && 'execute' in interaction) {
+		client.interactions.set(interaction.id, interaction)
+	} else {
+		console.log(`[WARNING] The interaction at ${filePath} is missing a required "id" or "execute" property.`);
+	}
+}
+
 
 require('./web')
 client.login(token);
