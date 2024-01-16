@@ -18,62 +18,75 @@ async function VoiceChannel(guild)
 		if (guildData)
 		{
 			try {
+				if (!guildData.VoiceCategory)
+					throw "No Data";
+
 				voiceCat = await guild.channels.fetch(guildData.VoiceCategory)
 			} catch(e) {
 				voiceCat = null
 			}
 
 			try {
+				if (!guildData.VoiceTextCategory)
+					throw "No Data";
+
 				voiceTexCat = await guild.channels.fetch(guildData.VoiceTextCategory)
 			} catch(e) {
 				voiceTexCat = null
 			}
 
 			try {
+				if (!guildData.VoiceCreate)
+					throw "No Data";
+
 				voiceCreateChn = await guild.channels.fetch(guildData.VoiceCreate)
 
 				if(!voiceCat || voiceCreateChn.parentId != voiceCat.id)
 				{
+					voiceCreateChn?.delete()
 					voiceCreateChn = null
-					chn.delete()
 				}
 			} catch(e) {
 				voiceCreateChn = null
 			}
 
 			try {
+				if (!guildData.VoiceCreateClosed)
+					throw "No Data";
+
 				voiceCreateCloseChn = await guild.channels.fetch(guildData.VoiceCreateClosed)
 
 				if(!voiceCat || voiceCreateCloseChn.parentId != voiceCat.id)
 				{
+					voiceCreateCloseChn?.delete()
 					voiceCreateCloseChn = null
-					chn.delete()
 				}
 			} catch(e) {
 				voiceCreateCloseChn = null
 			}
 		}
 
-		voiceCat = voiceCat ?? await guild.channels.create({
-			name: 'DuckBot: Личные комнаты', type: ChannelType.GuildCategory, position: 1, deny: [{
+		voiceCat = voiceCat || await guild.channels.create({
+			name: 'DuckBot: Личные комнаты', type: ChannelType.GuildCategory, position: 2, deny: [{
 				id: guild.id,
 				allow: [PermissionFlagsBits.ViewChannel],
 			}]
 		})
-		voiceTexCat = voiceTexCat ?? await guild.channels.create({
-			name: 'DuckBot: Меню личных комнат', type: ChannelType.GuildCategory, position: 2, deny: [{
+		voiceTexCat = voiceTexCat || await guild.channels.create({
+			name: 'DuckBot: Меню личных комнат', type: ChannelType.GuildCategory, position: 1, deny: [{
 				id: guild.id,
 				allow: [PermissionFlagsBits.ViewChannel],
 			}]
 		})
-		voiceCreateChn = voiceCreateChn ?? await guild.channels.create({ name: 'Создать комнату', parent: voiceCat, type: ChannelType.GuildVoice, position: 1 })
-		voiceCreateCloseChn = voiceCreateCloseChn ?? await guild.channels.create({ name: 'Создать скрытую комнату', parent: voiceCat, type: ChannelType.GuildVoice, position: 2 })
+		voiceCreateChn = voiceCreateChn || await guild.channels.create({ name: 'Создать комнату', parent: voiceCat, type: ChannelType.GuildVoice, position: 1 })
+		voiceCreateCloseChn = voiceCreateCloseChn || await guild.channels.create({ name: 'Создать скрытую комнату', parent: voiceCat, type: ChannelType.GuildVoice, position: 2 })
 
 		guildData.VoiceCategory = voiceCat.id
 		guildData.VoiceTextCategory = voiceTexCat.id
 		guildData.VoiceCreate = voiceCreateChn.id
 		guildData.VoiceCreateClosed = voiceCreateCloseChn.id
-		guildData.save()
+		
+		await guildData.save()
 
 		// let owner = await guild.fetchOwner()
 		// owner.send(`Приветствую, я DuckBot. Я создал для вас категорию с личными каналами. Она сейчас скрыта от посторонних глаз, дабы вы могли настроить всё.`)
@@ -97,7 +110,7 @@ async function _settings(guild)
 			return true
 
 		guildData.Settings = { Version: 1 }
-		guildData.save()
+		await guildData.save()
 
 		const { embed, rows } = Settings.Components(guildData.Settings, guild)
 
@@ -129,7 +142,7 @@ module.exports = {
 			const guildData = await GuildSchema.findOne({ Guild: guild.id })
 			if (!guildData)
 			{
-				GuildSchema.create({
+				await GuildSchema.create({
 					Guild: guild.id,
 					DataVersion: 1,
 				})
