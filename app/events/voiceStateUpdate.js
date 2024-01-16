@@ -61,6 +61,7 @@ async function CreateVoice(oldState, newState, guildData)
 			.setColor(0x0099FF)
 			.setTitle('Управление личной комнатой')
 			.setDescription(`Подготовка меню...\nСоздатель: <@${member.id}>`)
+			.setTimestamp(Date.now())
 
 		await textChannel.send({embeds: [embed], allowedMentions: { repliedUser: false }})
 		VoiceChannels.UpdateMenu(textChannel, voiceChannel)
@@ -151,7 +152,6 @@ module.exports = {
 		if (member.user.bot || newChannel?.id == oldChannel?.id)
 			return
 
-			
 		CreateVoice(oldState, newState, guildData)
 		JoinVoice(oldState, newState, guildData)
 		LeaveVoice(oldState, newState, guildData)

@@ -1,5 +1,16 @@
 const { EmbedBuilder, PermissionFlagsBits, ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('discord.js');
 
+async function IsVoiceChannel(channel)
+{
+	const { GuildSchema } = process.mongo;
+
+	let guildId = channel.guild.id
+	let guildData = await GuildSchema.findOne({ Guild: guildId })
+	if (!guildData) return false
+
+	return channel.parentId == guildData.VoiceCategory
+}
+
 function GetOwner(channel)
 {
     let perms = channel.permissionOverwrites.cache
@@ -11,20 +22,29 @@ function GetOwner(channel)
 
 async function GetTextChannel(channel, guildData)
 {
+	if (!guildData)
+	{
+		const { GuildSchema } = process.mongo;
+
+		guildData = await GuildSchema.findOne({ Guild: channel.guild.id })
+		if (!guildData) return false
+	}
+
 	let channels = await channel.guild.channels.fetch()
 	return channels.find(chn => chn.parentId == guildData.VoiceTextCategory && chn.topic == channel.id) || false
 }
 
-async function GetVoiceChannelFromText(channel)
+async function GetVoiceChannel(channel)
 {
-	console.log(channel.topic)
 	return await channel.guild.channels.fetch(channel.topic)
 }
 
 // TODO: Сделать меню рабочим
 async function UpdateMenu(channel, voiceChannel)
 {
-	voiceChannel = voiceChannel || await GetVoiceChannelFromText(channel)
+	channel = channel || voiceChannel && await GetTextChannel(voiceChannel)
+	voiceChannel = voiceChannel || channel && await GetVoiceChannel(channel)
+
 	const guild = channel.guild
 	let menu = await channel.messages.fetch({ limit: 1 })
 	menu = menu.first()
@@ -50,7 +70,7 @@ async function UpdateMenu(channel, voiceChannel)
 	if (isClosed || isHidden)
 	{
 		const button = new ButtonBuilder()
-			.setCustomId('voice_unlock')
+			.setCustomId('voice:unlock')
 			.setLabel('Открыть')
 			.setStyle(ButtonStyle.Success);
 		buttons.push(button)
@@ -59,7 +79,7 @@ async function UpdateMenu(channel, voiceChannel)
 	if (!isClosed)
 	{
 		const button = new ButtonBuilder()
-			.setCustomId('voice_lock')
+			.setCustomId('voice:lock')
 			.setLabel('Закрыть')
 			.setStyle(ButtonStyle.Danger);
 		buttons.push(button)
@@ -68,11 +88,17 @@ async function UpdateMenu(channel, voiceChannel)
 	if (!isHidden)
 	{
 		const button = new ButtonBuilder()
-			.setCustomId('voice_hide')
+			.setCustomId('voice:hide')
 			.setLabel('Спрятать')
 			.setStyle(ButtonStyle.Secondary);
 		buttons.push(button)
 	}
+
+	const button = new ButtonBuilder()
+		.setCustomId('voice:owner')
+		.setLabel('Сменить владельца')
+		.setStyle(ButtonStyle.Primary);
+	buttons.push(button)
 	// BUTTONS END
 
 	const newEmbed = EmbedBuilder.from(embed)
@@ -82,8 +108,37 @@ async function UpdateMenu(channel, voiceChannel)
 	menu.edit({ embeds: [newEmbed], components: [row] })
 }
 
+async function SetVoiceState(voiceChannel, newState)
+{
+	let guild = voiceChannel.guild
+	let newPerms = {
+		ViewChannel: null,
+		Connect: null,
+	}
+
+	switch(newState)
+	{
+		case "lock":
+			newPerms.Connect = false
+			break;
+		case "hide":
+			newPerms.ViewChannel = false
+			break;
+	}
+
+	await voiceChannel.permissionOverwrites.edit(guild.id, newPerms)
+	await UpdateMenu(false, voiceChannel)
+	return true
+}
+
 module.exports = {
+	IsVoiceChannel,
 	GetOwner,
 	GetTextChannel,
+	GetVoiceChannel,
 	UpdateMenu,
+
+	Commands: {
+		SetVoiceState
+	}
 }
