@@ -111,6 +111,26 @@ const Settings = [
         },
         (guildSettings) => {
             return `${typeof guildSettings.PartiesChannel === 'undefined' ? "не указан" : `<#${guildSettings.PartiesChannel}>`} `
+        }, (interaction, guildId) => {
+            // TODO: заменить уже закрепленный тред в форуме на собственный
+            interaction.client.channels.fetch(interaction.values[0]).then((channel) => {
+                channel.threads.create({
+                    name: "Хочешь найти компанию? Кликни на меня!", message: {
+                        content: "TODO", components: [
+                            new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('pt:start').setLabel('Объявить о поиске компании').setStyle(ButtonStyle.Primary))
+                        ]
+                    }
+                }).then(async (thread) => {
+                    const { GuildSchema } = process.mongo;
+                    await GuildSchema.updateOne({ Guild: guildId }, { $set: { PartiesThread: thread.id } })
+                }).catch(console.error)
+            })
+        }, async (interaction, guildId) => {
+            const { GuildSchema } = process.mongo;
+            const guildData = await GuildSchema.findOne({ Guild: guildId })
+            interaction.client.channels.fetch(guildData.PartiesThread).then((channel) => { channel.delete() }).catch(console.error)
+            guildData.PartiesThread = ""
+            guildData.save()
         }
     ),
 

@@ -10,5 +10,6 @@ const Schema = new mongo.Schema({
 	VoiceCreateClosed: String,
 
 	Settings: Object,
+	PartiesThread: String,
 });
 module.exports = mongo.model('guilds', Schema);
