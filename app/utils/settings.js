@@ -1,4 +1,4 @@
-const { ButtonBuilder, ButtonStyle, ActionRowBuilder, EmbedBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, TextInputBuilder, ModalBuilder, TextInputStyle } = require('discord.js');
+const { ChannelFlagsBitField, ButtonBuilder, ButtonStyle, ActionRowBuilder, EmbedBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, TextInputBuilder, ModalBuilder, TextInputStyle } = require('discord.js');
 
 class BaseSetting {
     /**
@@ -112,7 +112,6 @@ const Settings = [
         (guildSettings) => {
             return `${typeof guildSettings.PartiesChannel === 'undefined' ? "не указан" : `<#${guildSettings.PartiesChannel}>`} `
         }, (interaction, guildId) => {
-            // TODO: заменить уже закрепленный тред в форуме на собственный
             interaction.client.channels.fetch(interaction.values[0]).then((channel) => {
                 channel.threads.create({
                     name: "Хочешь найти компанию? Кликни на меня!", message: {
@@ -123,6 +122,11 @@ const Settings = [
                 }).then(async (thread) => {
                     const { GuildSchema } = process.mongo;
                     await GuildSchema.updateOne({ Guild: guildId }, { $set: { PartiesThread: thread.id } })
+                    const pinnedThread = thread.parent.threads.cache.find(thread => thread.flags.has(ChannelFlagsBitField.Flags.Pinned))
+                    if (typeof pinnedThread !== 'undefined') {
+                        pinnedThread.unpin()
+                    }
+                    thread.pin()
                 }).catch(console.error)
             })
         }, async (interaction, guildId) => {
