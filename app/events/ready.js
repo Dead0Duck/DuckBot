@@ -1,5 +1,5 @@
 const { Events } = require('discord.js');
-const { GuildInitialize } = require('../utils')
+const { GuildInitialize, Parties } = require('../utils')
 
 module.exports = {
 	name: Events.ClientReady,
@@ -12,11 +12,13 @@ module.exports = {
 		process.mongo = require('../mongodb')
 		const { GuildSchema } = process.mongo
 
+		await Parties.checkMany(client)
+
 		const guilds = client.guilds.cache.map(guild => guild);
 		guilds.forEach(async guild => {
 			try {
 				await GuildInitialize.All(guild)
-			} catch(e) {
+			} catch (e) {
 				console.error(e)
 			}
 		})
