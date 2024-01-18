@@ -121,7 +121,12 @@ const Settings = [
                     }
                 }).then(async (thread) => {
                     const { GuildSchema } = process.mongo;
-                    await GuildSchema.updateOne({ Guild: guildId }, { $set: { PartiesThread: thread.id } })
+                    const guildData = await GuildSchema.findOne({ Guild: guildId })
+                    if (typeof guildData.PartiesThread !== 'undefined') {
+                        interaction.client.channels.fetch(guildData.PartiesThread).then((channel) => { channel.delete() }).catch(console.error)
+                    }
+                    guildData.PartiesThread = thread.id
+                    guildData.save()
                     const pinnedThread = thread.parent.threads.cache.find(thread => thread.flags.has(ChannelFlagsBitField.Flags.Pinned))
                     if (typeof pinnedThread !== 'undefined') {
                         pinnedThread.unpin()
@@ -133,7 +138,7 @@ const Settings = [
             const { GuildSchema } = process.mongo;
             const guildData = await GuildSchema.findOne({ Guild: guildId })
             interaction.client.channels.fetch(guildData.PartiesThread).then((channel) => { channel.delete() }).catch(console.error)
-            guildData.PartiesThread = ""
+            guildData.PartiesThread = undefined
             guildData.save()
         }
     ),
