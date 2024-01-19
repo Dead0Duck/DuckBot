@@ -32,14 +32,10 @@ module.exports = {
             case "modal":
                 const values = {}
                 interaction.fields.fields.map((field) => { Object.assign(values, { [field.customId]: field.value }) })
-                function value(id) {
-                    return interaction.fields.getField(id).value
-                }
                 const restartRow = new ActionRowBuilder({ components: [new ButtonBuilder({ custom_id: `${interId}:restart`, label: "Попробовать снова", style: ButtonStyle.Secondary })] })
-                const inputDate = value('date').split(" ")
+                const inputDate = values.date.split(" ")
                 const collectorFilter = (i) => { return ((i.user.id === interaction.user.id) && (i.customId.split(":")[0] === interId)) }
                 let date
-
                 try {
                     if (inputDate.length < 2 || inputDate.length > 3) {
                         throw "Что-то пропущено/лишнее в дате сбора. Попробуйте снова."
@@ -49,7 +45,7 @@ module.exports = {
                         throw "Разница с МСК указана неправильно. Попробуйте снова."
                     }
                     if (offset > 9 || offset < -15) {
-                        throw "Вы указали несуществующий часовой пояс. Попробуйте снова."
+                        throw "Вы указали несуществующий часовой пояс в поле для даты сбора. Попробуйте снова."
                     }
                     date = dayjs(`${inputDate[0]} ${inputDate[1]}`, 'DD-MM-YYYY HH:mm')
                     offset = -offset - 3
@@ -76,12 +72,12 @@ module.exports = {
                     return
                 }
                 const checkInfoResponse = await interaction.reply({
-                    content: "Проверьте ввёденые данные", ephemeral: true, embeds: [new EmbedBuilder({
-                        fields: [{ name: "Название активности", value: value("activityName") },
-                        { name: "Количество участников", value: value('participantsNumber') },
+                    content: "Проверьте введённые данные", ephemeral: true, embeds: [new EmbedBuilder({
+                        fields: [{ name: "Название активности", value: values.activityName },
+                        { name: "Количество участников", value: values.participantsNumber },
                         { name: "Дата и время сбора", value: `<t:${date.unix()}>` },
-                        { name: "Требования", value: value('requirement').length < 1 ? '_не указано_' : value('requirement') },
-                        { name: "Примечание", value: value('tip').length < 1 ? '_не указано_' : value('tip') }]
+                        { name: "Требования", value: values.requirement.length < 1 ? '_не указано_' : values.requirement },
+                        { name: "Примечание", value: values.tip.length < 1 ? '_не указано_' : values.tip }]
                     })], components: [
                         new ActionRowBuilder({
                             components: [new ButtonBuilder({ label: "Подтвердить", custom_id: `${interId}:accept`, style: ButtonStyle.Success }),
