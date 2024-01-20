@@ -125,6 +125,20 @@ const Settings = [
                     if (typeof guildData.PartiesThread !== 'undefined') {
                         interaction.client.channels.fetch(guildData.PartiesThread).then((channel) => { channel.delete() }).catch(console.error)
                     }
+                    interaction.guild.fetchWebhooks().then(async (webhooks) => {
+                        const webhook = webhooks.find(item => item.id === guildData.PartiesWebhookId)
+                        if (typeof webhook !== 'undefined') {
+                            await webhook.edit({ channel: thread.parent.id })
+                        } else {
+                            thread.parent.createWebhook({ name: 'DuckBot Parties' }).then((webhook) => {
+                                guildData.PartiesWebhookId = webhook.id
+                                guildData.PartiesWebhookToken = webhook.token
+                                guildData.save()
+                                interaction.followUp({ content: '> ⚠️ Создан новый вебхук `DuckBot Parties`. Ни при каких обстоятельствах **не удаляйте и не изменяйте его**. В противном случае редактировать объявления **будет невозможно**.', ephemeral: true })
+
+                            })
+                        }
+                    })
                     guildData.PartiesThread = thread.id
                     guildData.save()
                     const pinnedThread = thread.parent.threads.cache.find(thread => thread.flags.has(ChannelFlagsBitField.Flags.Pinned))
@@ -138,6 +152,15 @@ const Settings = [
             const { GuildSchema } = process.mongo;
             const guildData = await GuildSchema.findOne({ Guild: guildId })
             interaction.client.channels.fetch(guildData.PartiesThread).then((channel) => { channel.delete() }).catch(console.error)
+            interaction.guild.fetchWebhooks().then(async (webhooks) => {
+                const webhook = webhooks.find(item => item.id === guildData.PartiesWebhookId)
+                if (typeof webhook !== 'undefined') {
+                    await webhook.delete()
+                }
+                guildData.PartiesWebhookId = undefined
+                guildData.PartiesWebhookToken = undefined
+                guildData.save()
+            })
             guildData.PartiesThread = undefined
             guildData.save()
         }

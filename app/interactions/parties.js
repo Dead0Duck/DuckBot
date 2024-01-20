@@ -1,4 +1,4 @@
-const { ActionRowBuilder, TextInputBuilder, ModalBuilder, TextInputStyle, ButtonBuilder, ButtonStyle, ComponentType, EmbedBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, DiscordjsErrorCodes, MentionableSelectMenuBuilder } = require('discord.js');
+const { ActionRowBuilder, TextInputBuilder, ModalBuilder, TextInputStyle, ButtonBuilder, ButtonStyle, ComponentType, EmbedBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, DiscordjsErrorCodes, MentionableSelectMenuBuilder, WebhookClient } = require('discord.js');
 const dayjs = require('dayjs')
 const customParseFormat = require('dayjs/plugin/customParseFormat')
 dayjs.extend(customParseFormat)
@@ -141,22 +141,28 @@ module.exports = {
                                     stringInvites += `<@${user.id}> `
                                 })
                             }
-                            await inviteConfirmation.channel.parent.threads.create({
-                                name: values.activityName, message: {
-                                    content:
-                                        `* \`👑 Организатор:\` <@${inviteConfirmation.user.id}>\n` +
-                                        `* \`👥 Количество участников:\` ${values.participantsNumber}\n` +
-                                        `* \`🕐 Дата и время сбора:\` <t:${date.unix()}>\n` +
-                                        (values.requirement.length > 0 ? `* \`⚠️ Требования:\` ${values.requirement}\n` : '') +
-                                        (stringInvites.length > 0 ? `* \`✉️ Приглашаю:\` ${stringInvites}\n` : '') +
-                                        (values.tip.length > 0 ? `* \`ℹ️ Примечание:\` ${values.tip}` : '')
-                                }, appliedTags: [forumTag]
-                            }).then(async (thread) => {
-                                await inviteConfirmation.update({ content: `Канал создан: <#${thread.id}>\nЖелаю хорошего совместного времяпровождения!`, components: [] })
-                            }).catch(async (e) => {
-                                await inviteConfirmation.update({ content: 'Произошла ошибка во время создания канала.', components: [] })
-                                console.error(e)
+                            const { GuildSchema } = process.mongo;
+                            const guildData = await GuildSchema.findOne({ Guild: inviteConfirmation.guild.id })
+
+                            const webhookClient = new WebhookClient({ id: guildData.PartiesWebhookId, token: guildData.PartiesWebhookToken })
+
+                            await webhookClient.send({
+                                threadName: values.activityName, username: inviteConfirmation.user.username,
+                                avatarURL: inviteConfirmation.user.avatarURL(),
+                                content:
+                                    `* \`👥 Количество участников:\` ${values.participantsNumber}\n` +
+                                    `* \`🕐 Дата и время сбора:\` <t:${date.unix()}>\n` +
+                                    (values.requirement.length > 0 ? `* \`⚠️ Требования:\` ${values.requirement}\n` : '') +
+                                    (stringInvites.length > 0 ? `* \`✉️ Приглашаю:\` ${stringInvites}\n` : '') +
+                                    (values.tip.length > 0 ? `* \`📝 Примечание:\` ${values.tip}` : ''),
                             })
+                                .then(async (thread) => {
+                                    inviteConfirmation.channel.parent.threads.fetch(thread.id).then(channel => channel.setAppliedTags([forumTag]))
+                                    await inviteConfirmation.update({ content: `Канал создан: <#${thread.id}>\nЖелаю хорошего совместного времяпровождения!`, components: [] })
+                                }).catch(async (e) => {
+                                    await inviteConfirmation.update({ content: 'Произошла ошибка во время создания канала.', components: [] })
+                                    console.error(e)
+                                })
                             break
                         case 'retry':
                             confirmation.showModal(new ModalBuilder({
