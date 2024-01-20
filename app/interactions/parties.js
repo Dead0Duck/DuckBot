@@ -1,4 +1,4 @@
-const { ActionRowBuilder, TextInputBuilder, ModalBuilder, TextInputStyle, ButtonBuilder, ButtonStyle, ComponentType, EmbedBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, DiscordjsErrorCodes, MentionableSelectMenuBuilder, WebhookClient } = require('discord.js');
+const { ActionRowBuilder, TextInputBuilder, ModalBuilder, TextInputStyle, ButtonBuilder, ButtonStyle, ComponentType, EmbedBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, DiscordjsErrorCodes, MentionableSelectMenuBuilder, WebhookClient, PermissionsBitField } = require('discord.js');
 const dayjs = require('dayjs')
 const customParseFormat = require('dayjs/plugin/customParseFormat')
 dayjs.extend(customParseFormat)
@@ -17,10 +17,67 @@ function formComponents(values = defaultValues) {
     ]
 }
 
+function validateDate(inputDate) {
+    if (inputDate.length < 2 || inputDate.length > 3) {
+        throw "Что-то пропущено/лишнее в дате сбора. Попробуйте снова."
+    }
+    let offset = inputDate.length < 3 ? 0 : parseInt(inputDate[2])
+    if (isNaN(offset)) {
+        throw "Разница с МСК указана неправильно. Попробуйте снова."
+    }
+    if (offset > 9 || offset < -15) {
+        throw "Вы указали несуществующий часовой пояс в поле для даты сбора. Попробуйте снова."
+    }
+    date = dayjs(`${inputDate[0]} ${inputDate[1]}`, 'DD-MM-YYYY HH:mm')
+    offset = -offset - 3
+    date = date.add(offset, 'hours')
+    if (!(date.isValid())) {
+        throw "Дата сбора указана неверно."
+    }
+    if (date.isBefore(new Date())) {
+        throw "Вы что, из прошлого? Укажите дату сбора правильно."
+    }
+    return date
+}
+
+function messageParty(userId, partNumber, date, requirement, stringInvites, tip) {
+    return `* \`👑 Организатор:\` <@${userId}>\n` +
+        `* \`👥 Количество участников:\` ${partNumber}\n` +
+        `* \`🕐 Дата и время сбора:\` <t:${date.unix()}>\n` +
+        (requirement.length > 0 ? `* \`⚠️ Требования:\` ${requirement}\n` : '') +
+        (stringInvites.length > 0 ? `* \`✉️ Приглашаю:\` ${stringInvites}\n` : '') +
+        (tip.length > 0 ? `* \`📝 Примечание:\` ${tip}` : '')
+}
+
+function mentionsGen(users, roles) {
+    stringInvites = ""
+    const userMentions = []
+    const roleMentions = []
+
+    if (typeof roles !== 'undefined') {
+        roles.forEach((role) => {
+            stringInvites += `<@&${role.id}> `
+            roleMentions.push(role.id)
+        })
+    }
+
+    if (typeof users !== 'undefined') {
+        users.forEach((user) => {
+            stringInvites += `<@${user.id}> `
+            userMentions.push(user.id)
+        })
+    }
+    return { stringInvites, userMentions, roleMentions }
+}
+
 module.exports = {
     id: interId,
     execute: async (interaction) => {
         const customId = interaction.customId.split(":")
+        const collectorFilter = (i) => { return ((i.user.id === interaction.user.id) && (i.customId.split(":")[0] === interId)) }
+        const { GuildSchema, PartySchema } = process.mongo;
+        const guildData = await GuildSchema.findOne({ Guild: interaction.guild.id })
+        const webhookClient = new WebhookClient({ id: guildData.PartiesWebhookId, token: guildData.PartiesWebhookToken })
         if (customId[0] !== interId) { return }
         console.log(customId)
         switch (customId[1]) {
@@ -34,28 +91,9 @@ module.exports = {
                 interaction.fields.fields.map((field) => { Object.assign(values, { [field.customId]: field.value }) })
                 const restartRow = new ActionRowBuilder({ components: [new ButtonBuilder({ custom_id: `${interId}:restart`, label: "Попробовать снова", style: ButtonStyle.Secondary })] })
                 const inputDate = values.date.split(" ")
-                const collectorFilter = (i) => { return ((i.user.id === interaction.user.id) && (i.customId.split(":")[0] === interId)) }
                 let date
                 try {
-                    if (inputDate.length < 2 || inputDate.length > 3) {
-                        throw "Что-то пропущено/лишнее в дате сбора. Попробуйте снова."
-                    }
-                    let offset = inputDate.length < 3 ? 0 : parseInt(inputDate[2])
-                    if (isNaN(offset)) {
-                        throw "Разница с МСК указана неправильно. Попробуйте снова."
-                    }
-                    if (offset > 9 || offset < -15) {
-                        throw "Вы указали несуществующий часовой пояс в поле для даты сбора. Попробуйте снова."
-                    }
-                    date = dayjs(`${inputDate[0]} ${inputDate[1]}`, 'DD-MM-YYYY HH:mm')
-                    offset = -offset - 3
-                    date = date.add(offset, 'hours')
-                    if (!(date.isValid())) {
-                        throw "Дата сбора указана неверно."
-                    }
-                    if (date.isBefore(new Date())) {
-                        throw "Вы что, из прошлого? Укажите дату сбора правильно."
-                    }
+                    date = validateDate(inputDate)
                 } catch (e) {
                     const retryResponse = await interaction.reply({ content: typeof e === 'string' ? e : "Что-то пошло не так :/", ephemeral: true, components: [restartRow], fetchReply: true })
                     await retryResponse.awaitMessageComponent({ collectorFilter, time: 300_000 }).then((confirmation) => {
@@ -130,35 +168,39 @@ module.exports = {
                                 ], embeds: []
                             })
                             const inviteConfirmation = await inviteResponse.awaitMessageComponent({ collectorFilter, time: timerMSeconds })
-                            const customId = inviteConfirmation.customId.split(":")
-                            let stringInvites = ""
-                            if (customId[1] === 'invite') {
-                                mentionableUsers = inviteConfirmation.users
-                                inviteConfirmation.roles.forEach((role) => {
-                                    stringInvites += `<@&${role.id}> `
-                                })
-                                inviteConfirmation.users.forEach((user) => {
-                                    stringInvites += `<@${user.id}> `
-                                })
-                            }
-                            const { GuildSchema } = process.mongo;
-                            const guildData = await GuildSchema.findOne({ Guild: inviteConfirmation.guild.id })
 
-                            const webhookClient = new WebhookClient({ id: guildData.PartiesWebhookId, token: guildData.PartiesWebhookToken })
+                            const { stringInvites, userMentions, roleMentions } = mentionsGen(inviteConfirmation.users, inviteConfirmation.roles)
+
 
                             await webhookClient.send({
                                 threadName: values.activityName, username: inviteConfirmation.user.username,
                                 avatarURL: inviteConfirmation.user.avatarURL(),
-                                content:
-                                    `* \`👥 Количество участников:\` ${values.participantsNumber}\n` +
-                                    `* \`🕐 Дата и время сбора:\` <t:${date.unix()}>\n` +
-                                    (values.requirement.length > 0 ? `* \`⚠️ Требования:\` ${values.requirement}\n` : '') +
-                                    (stringInvites.length > 0 ? `* \`✉️ Приглашаю:\` ${stringInvites}\n` : '') +
-                                    (values.tip.length > 0 ? `* \`📝 Примечание:\` ${values.tip}` : ''),
+                                content: messageParty(inviteConfirmation.user.id, values.participantsNumber, date, values.requirement, stringInvites, values.tip),
+                                components: [new ActionRowBuilder({
+                                    components: [
+                                        new ButtonBuilder({ custom_id: `${interId}:deleteParty`, label: "Удалить", style: ButtonStyle.Danger }),
+                                        new ButtonBuilder({ custom_id: `${interId}:editParty`, label: "Редактировать", style: ButtonStyle.Secondary }),
+                                        new ButtonBuilder({ custom_id: `${interId}:finishParty`, label: "Завершено", style: ButtonStyle.Success })
+                                    ]
+                                })]
                             })
                                 .then(async (thread) => {
                                     inviteConfirmation.channel.parent.threads.fetch(thread.id).then(channel => channel.setAppliedTags([forumTag]))
-                                    await inviteConfirmation.update({ content: `Канал создан: <#${thread.id}>\nЖелаю хорошего совместного времяпровождения!`, components: [] })
+                                    await inviteConfirmation.update({ content: `Канал создан: <#${thread.id}>\nЖелаю хорошего совместного времяпровождения!\n\n\`⚠️ После 30 минут от начала сбора канал закроется.\``, components: [] })
+                                    const { PartySchema } = process.mongo;
+                                    await PartySchema.create({
+                                        ThreadId: thread.id,
+                                        CreatorId: inviteConfirmation.user.id,
+                                        ActivityName: values.activityName,
+                                        ParticipantsNumber: values.participantsNumber,
+                                        Date: date.toDate(),
+                                        DateUserInput: values.date,
+                                        Requirement: values.requirement,
+                                        Tip: values.tip,
+                                        UserMentions: userMentions,
+                                        RoleMentions: roleMentions
+                                    })
+
                                 }).catch(async (e) => {
                                     await inviteConfirmation.update({ content: 'Произошла ошибка во время создания канала.', components: [] })
                                     console.error(e)
@@ -168,10 +210,8 @@ module.exports = {
                             confirmation.showModal(new ModalBuilder({
                                 title: "Поиск компании", custom_id: `${interId}:modal`, components: formComponents(values)
                             }))
-                            interaction.deleteReply()
-                            break
                         case 'cancel':
-                            confirmation.update({ content: 'И на этом всё.', components: [], embeds: [] });
+                            interaction.deleteReply()
                             break
                     }
 
@@ -182,6 +222,157 @@ module.exports = {
                         console.error(e)
                 })
                 return
+            case "deleteParty":
+                const partyDataDel = await PartySchema.findOne({ ThreadId: interaction.channel.id })
+                if (partyDataDel && partyDataDel.CreatorId === interaction.user.id || interaction.memberPermissions.has(PermissionsBitField.Flags.Administrator)) {
+                    const deleteResponse = await interaction.reply({
+                        content: "Вы точно хотите удалить?", components: [
+                            new ActionRowBuilder({
+                                components: [
+                                    new ButtonBuilder({ custom_id: `${interId}:deleteConfirm`, label: 'Удалить', style: ButtonStyle.Danger }),
+                                    new ButtonBuilder({ custom_id: `${interId}:deleteCancel`, label: 'Отменить', style: ButtonStyle.Secondary })
+                                ]
+                            })
+                        ], ephemeral: true, fetchReply: true
+                    })
+                    try {
+                        const deleteConfirmation = await deleteResponse.awaitMessageComponent(collectorFilter, 30_000)
+                        const customId = deleteConfirmation.customId.split(":")
+                        if (customId[1] === 'deleteConfirm') {
+                            deleteConfirmation.channel.delete()
+                            await PartySchema.deleteOne({ ThreadId: interaction.channel.id })
+                        }
+                        if (customId[1] === 'deleteCancel') {
+                            interaction.deleteReply()
+                        }
+                    } catch (e) {
+                        if (e.code === DiscordjsErrorCodes.InteractionCollectorError)
+                            await interaction.deleteReply()
+                        else
+                            console.error(e)
+                    }
+                } else {
+                    interaction.reply({ content: "У вас нет прав для этого.", ephemeral: true })
+                }
+                return
+            case "finishParty":
+                const partyDataFin = await PartySchema.findOne({ ThreadId: interaction.channel.id })
+                if (partyDataFin && partyDataFin.CreatorId === interaction.user.id || interaction.memberPermissions.has(PermissionsBitField.Flags.Administrator)) {
+                    const finishResponse = await interaction.reply({
+                        content: "Вы уверены? Это действие необратимо.", components: [
+                            new ActionRowBuilder({
+                                components: [
+                                    new ButtonBuilder({ custom_id: `${interId}:finishConfirm`, label: 'Да', style: ButtonStyle.Success }),
+                                    new ButtonBuilder({ custom_id: `${interId}:finishCancel`, label: 'Нет', style: ButtonStyle.Secondary })
+                                ]
+                            })
+                        ], ephemeral: true, fetchReply: true
+                    })
+                    try {
+                        const finishConfirmation = await finishResponse.awaitMessageComponent(collectorFilter, 30_000)
+                        const customId = finishConfirmation.customId.split(":")
+                        if (customId[1] === 'finishConfirm') {
+                            webhookClient.editMessage(interaction.message, { content: interaction.message.content, components: [], threadId: interaction.channel.id })
+                            interaction.deleteReply()
+                            finishConfirmation.channel.setLocked(true)
+                            await PartySchema.deleteOne({ ThreadId: interaction.channel.id })
+                        }
+                        if (customId[1] === 'finishCancel') {
+                            interaction.deleteReply()
+                        }
+                    } catch (e) {
+                        if (e.code === DiscordjsErrorCodes.InteractionCollectorError)
+                            await interaction.deleteReply()
+                        else
+                            console.error(e)
+                    }
+                } else {
+                    interaction.reply({ content: "У вас нет прав для этого.", ephemeral: true })
+                }
+                return
+            case "editParty":
+                const partyDataEdit = await PartySchema.findOne({ ThreadId: interaction.channel.id })
+                if (partyDataEdit && partyDataEdit.CreatorId === interaction.user.id || interaction.memberPermissions.has(PermissionsBitField.Flags.Administrator)) {
+                    interaction.showModal(new ModalBuilder({
+                        title: "Редактирование", custom_id: `${interId}:editModal`, components: formComponents({
+                            activityName: partyDataEdit.ActivityName,
+                            participantsNumber: partyDataEdit.ParticipantsNumber,
+                            date: partyDataEdit.DateUserInput,
+                            requirement: partyDataEdit.Requirement,
+                            tip: partyDataEdit.Tip
+                        })
+                    }))
+                } else {
+                    interaction.reply({ content: "У вас нет прав для этого.", ephemeral: true })
+                }
+                return
+            case "editModal":
+                const valuesModal = {}
+                const partyDataModal = await PartySchema.findOne({ ThreadId: interaction.channel.id })
+                const defaultValuesMentions = [].concat(partyDataModal.UserMentions, partyDataModal.RoleMentions)
+                console.log(defaultValuesMentions)
+                interaction.fields.fields.map((field) => { Object.assign(valuesModal, { [field.customId]: field.value }) })
+                let dateModal
+                try {
+                    dateModal = validateDate(valuesModal.date.split(" "))
+                } catch (e) {
+                    return await interaction.reply({ content: typeof e === 'string' ? e : "Что-то пошло не так :/", ephemeral: true })
+                }
+                const mentionsResponse = await interaction.reply({
+                    content: `Выберите тех, кого приглашаете. Диалог закроется <t:${dayjs().add(120_000, 'milliseconds').unix()}:R>.`, components: [
+                        new ActionRowBuilder({
+                            components: [
+                                new MentionableSelectMenuBuilder({ custom_id: `${interId}:editInvite`, max_values: 10 }).addDefaultUsers(partyDataModal.UserMentions).addDefaultRoles(partyDataModal.RoleMentions)
+                            ]
+                        }),
+                        new ActionRowBuilder({
+                            components: [
+                                new ButtonBuilder({ custom_id: `${interId}:skipEditInvite`, label: "Пропустить", style: ButtonStyle.Secondary }),
+                                new ButtonBuilder({ custom_id: `${interId}:wipeEditInvite`, label: "Стереть", style: ButtonStyle.Danger })
+                            ]
+                        })
+                    ], fetchReply: true, ephemeral: true
+                })
+                try {
+                    const mentionsConfirmation = await mentionsResponse.awaitMessageComponent(collectorFilter, 120_000)
+                    const customId = mentionsConfirmation.customId.split(":")
+                    let mentions
+                    switch (customId[1]) {
+                        case 'wipeEditInvite':
+                            mentions = mentionsGen(undefined, undefined)
+                            break
+                        case 'editInvite':
+                            mentions = mentionsGen(mentionsConfirmation.users, mentionsConfirmation.roles)
+                            break
+                        case 'skipEditInvite':
+                            mentions = mentionsGen(partyDataModal.UserMentions, partyDataModal.RoleMentions)
+                            break
+                    }
+                    partyDataModal.ActivityName = valuesModal.activityName
+                    partyDataModal.Date = dateModal.toDate()
+                    partyDataModal.Requirement = valuesModal.requirement
+                    partyDataModal.Tip = valuesModal.tip
+                    partyDataModal.UserMentions = mentions.userMentions
+                    partyDataModal.RoleMentions = mentions.roleMentions
+                    partyDataModal.save()
+
+                    webhookClient.editMessage(interaction.message, {
+                        content: messageParty(partyDataModal.CreatorId,
+                            valuesModal.participantsNumber,
+                            dateModal,
+                            valuesModal.requirement,
+                            mentions.stringInvites,
+                            valuesModal.tip
+                        ), threadId: interaction.channel.id
+                    })
+                    mentionsConfirmation.update({ content: "Отредактировано.", components: [] })
+
+                } catch (e) {
+                    if (e.code === DiscordjsErrorCodes.InteractionCollectorError)
+                        await interaction.editReply({ content: 'Вы настолько долго не отвечали, что бот пошел спать.', components: [], embeds: [] });
+                    else
+                        console.error(e)
+                }
         }
     }
 }

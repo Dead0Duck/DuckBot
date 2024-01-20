@@ -1,4 +1,3 @@
-const { Webhook } = require('discord.js');
 const mongo = require('mongoose');
 
 const Schema = new mongo.Schema({
@@ -14,6 +13,6 @@ const Schema = new mongo.Schema({
 
 	PartiesThread: String,
 	PartiesWebhookId: String,
-	PartiesWebhookToken: String
+	PartiesWebhookToken: String,
 });
 module.exports = mongo.model('guilds', Schema);
