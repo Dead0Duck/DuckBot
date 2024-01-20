@@ -1,4 +1,4 @@
-const { ActionRowBuilder, TextInputBuilder, ModalBuilder, TextInputStyle, ButtonBuilder, ButtonStyle, ComponentType, EmbedBuilder } = require('discord.js');
+const { ActionRowBuilder, TextInputBuilder, ModalBuilder, TextInputStyle, ButtonBuilder, ButtonStyle, ComponentType, EmbedBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, DiscordjsErrorCodes, MentionableSelectMenuBuilder } = require('discord.js');
 const dayjs = require('dayjs')
 const customParseFormat = require('dayjs/plugin/customParseFormat')
 dayjs.extend(customParseFormat)
@@ -11,7 +11,7 @@ function formComponents(values = defaultValues) {
     return [
         new ActionRowBuilder({ components: [new TextInputBuilder({ value: values.activityName }).setCustomId('activityName').setLabel('Название активности').setStyle(TextInputStyle.Short).setMaxLength(30).setRequired(true)] }),
         new ActionRowBuilder({ components: [new TextInputBuilder({ value: values.participantsNumber }).setCustomId('participantsNumber').setLabel('Количество участников').setStyle(TextInputStyle.Short).setMaxLength(50).setRequired(true)] }),
-        new ActionRowBuilder({ components: [new TextInputBuilder({ value: values.date }).setCustomId('date').setLabel('Дата и время сбора [дд.мм.гггг чч:мм +/-ч]').setStyle(TextInputStyle.Short).setMaxLength(50).setRequired(true)] }),
+        new ActionRowBuilder({ components: [new TextInputBuilder({ value: values.date }).setCustomId('date').setLabel('Дата и время сбора [дд.мм.гггг чч:мм +/-ч]').setStyle(TextInputStyle.Short).setMaxLength(20).setRequired(true)] }),
         new ActionRowBuilder({ components: [new TextInputBuilder({ value: values.requirement }).setCustomId('requirement').setLabel('Требования').setStyle(TextInputStyle.Short).setMaxLength(50).setRequired(false)] }),
         new ActionRowBuilder({ components: [new TextInputBuilder({ value: values.tip }).setCustomId('tip').setLabel('Примечание').setStyle(TextInputStyle.Paragraph).setMaxLength(200).setRequired(false)] })
     ]
@@ -59,6 +59,7 @@ module.exports = {
                 } catch (e) {
                     const retryResponse = await interaction.reply({ content: typeof e === 'string' ? e : "Что-то пошло не так :/", ephemeral: true, components: [restartRow], fetchReply: true })
                     await retryResponse.awaitMessageComponent({ collectorFilter, time: 300_000 }).then((confirmation) => {
+                        interaction.deleteReply()
                         const customId = confirmation.customId.split(":")
                         if (customId[1] === 'restart') {
 
@@ -71,8 +72,9 @@ module.exports = {
                     })
                     return
                 }
+                const timerMSeconds = 120_000
                 const checkInfoResponse = await interaction.reply({
-                    content: "Проверьте введённые данные", ephemeral: true, embeds: [new EmbedBuilder({
+                    content: `Проверьте введённые данные. Диалог закроется <t:${dayjs().add(timerMSeconds, 'milliseconds').unix()}:R>.`, ephemeral: true, embeds: [new EmbedBuilder({
                         fields: [{ name: "Название активности", value: values.activityName },
                         { name: "Количество участников", value: values.participantsNumber },
                         { name: "Дата и время сбора", value: `<t:${date.unix()}>` },
@@ -86,11 +88,75 @@ module.exports = {
                         })
                     ], fetchReply: true
                 })
-                await checkInfoResponse.awaitMessageComponent({ collectorFilter, time: 120_000 }).then((confirmation) => {
+                await checkInfoResponse.awaitMessageComponent({ collectorFilter, time: timerMSeconds }).then(async (confirmation) => {
                     const customId = confirmation.customId.split(":")
                     switch (customId[1]) {
                         case 'accept':
-                            confirmation.update({ content: 'TODO', components: [], embeds: [] });
+                            const tags = confirmation.channel.parent.availableTags
+                            let tagConfirmation
+                            let forumTag = null
+                            if (tags.length > 0) {
+                                const tagsSelect = new StringSelectMenuBuilder().setCustomId(`${interId}:tag`).setMaxValues(1)
+                                tags.forEach((tag) => {
+                                    console.log(tag)
+                                    tagsSelect.addOptions(
+                                        new StringSelectMenuOptionBuilder().setLabel(tag.name).setValue(tag.id).setEmoji(tag.emoji.id == null ? tag.emoji.name : tag.emoji.id)
+                                    )
+                                })
+                                const tagResponse = await confirmation.update({
+                                    content: `Выберите соответствующий тег для вашей активности. Диалог закроется <t:${dayjs().add(timerMSeconds, 'milliseconds').unix()}:R>.`, components: [
+                                        new ActionRowBuilder({ components: [tagsSelect] })
+                                    ], embeds: [], fetchReply: true
+                                })
+                                tagConfirmation = await tagResponse.awaitMessageComponent({ collectorFilter, time: timerMSeconds })
+                                forumTag = tagConfirmation.values[0]
+
+                            } else {
+                                tagConfirmation = confirmation
+                            }
+                            console.log(forumTag)
+                            const inviteResponse = await tagConfirmation.update({
+                                content: `Выберите тех, кого вы хотели бы пригласить. Диалог закроется <t:${dayjs().add(timerMSeconds, 'milliseconds').unix()}:R>.`, components: [
+                                    new ActionRowBuilder({
+                                        components: [
+                                            new MentionableSelectMenuBuilder({ custom_id: `${interId}:invite`, max_values: 10 })
+                                        ]
+                                    }),
+                                    new ActionRowBuilder({
+                                        components: [
+                                            new ButtonBuilder({ custom_id: `${interId}:skipInvite`, label: "Пропустить", style: ButtonStyle.Secondary })
+                                        ]
+                                    })
+                                ], embeds: []
+                            })
+                            const inviteConfirmation = await inviteResponse.awaitMessageComponent({ collectorFilter, time: timerMSeconds })
+                            const customId = inviteConfirmation.customId.split(":")
+                            let stringInvites = ""
+                            if (customId[1] === 'invite') {
+                                mentionableUsers = inviteConfirmation.users
+                                inviteConfirmation.roles.forEach((role) => {
+                                    stringInvites += `<@&${role.id}> `
+                                })
+                                inviteConfirmation.users.forEach((user) => {
+                                    stringInvites += `<@${user.id}> `
+                                })
+                            }
+                            await inviteConfirmation.channel.parent.threads.create({
+                                name: values.activityName, message: {
+                                    content:
+                                        `* \`👑 Организатор:\` <@${inviteConfirmation.user.id}>\n` +
+                                        `* \`👥 Количество участников:\` ${values.participantsNumber}\n` +
+                                        `* \`🕐 Дата и время сбора:\` <t:${date.unix()}>\n` +
+                                        (values.requirement.length > 0 ? `* \`⚠️ Требования:\` ${values.requirement}\n` : '') +
+                                        (stringInvites.length > 0 ? `* \`✉️ Приглашаю:\` ${stringInvites}\n` : '') +
+                                        (values.tip.length > 0 ? `* \`ℹ️ Примечание:\` ${values.tip}` : '')
+                                }, appliedTags: [forumTag]
+                            }).then(async (thread) => {
+                                await inviteConfirmation.update({ content: `Канал создан: <#${thread.id}>\nЖелаю хорошего совместного времяпровождения!`, components: [] })
+                            }).catch(async (e) => {
+                                await inviteConfirmation.update({ content: 'Произошла ошибка во время создания канала.', components: [] })
+                                console.error(e)
+                            })
                             break
                         case 'retry':
                             confirmation.showModal(new ModalBuilder({
@@ -104,7 +170,10 @@ module.exports = {
                     }
 
                 }).catch(async (e) => {
-                    await interaction.editReply({ content: 'Вы настолько долго проверяли, что бот пошел спать.', components: [], embeds: [] });
+                    if (e.code === DiscordjsErrorCodes.InteractionCollectorError)
+                        await interaction.editReply({ content: 'Вы настолько долго не отвечали, что бот пошел спать.', components: [], embeds: [] });
+                    else
+                        console.error(e)
                 })
                 return
         }
