@@ -1,4 +1,5 @@
 const { ChannelFlagsBitField, ButtonBuilder, ButtonStyle, ActionRowBuilder, EmbedBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, TextInputBuilder, ModalBuilder, TextInputStyle } = require('discord.js');
+const fs = require('fs');
 
 class BaseSetting {
     /**
@@ -112,10 +113,11 @@ const Settings = [
         (guildSettings) => {
             return `${typeof guildSettings.PartiesChannel === 'undefined' ? "не указан" : `<#${guildSettings.PartiesChannel}>`} `
         }, (interaction, guildId) => {
+            const partyFAQString = fs.readFileSync('bigstrings/partyfaq.md').toString('utf-8');
             interaction.client.channels.fetch(interaction.values[0]).then((channel) => {
                 channel.threads.create({
                     name: "Хочешь найти компанию? Кликни на меня!", message: {
-                        content: "TODO", components: [
+                        content: partyFAQString, components: [
                             new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('pt:start').setLabel('Объявить о поиске компании').setStyle(ButtonStyle.Primary))
                         ]
                     }

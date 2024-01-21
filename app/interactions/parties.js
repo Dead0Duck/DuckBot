@@ -216,7 +216,7 @@ module.exports = {
                                     if (forumTag != null) {
                                         inviteConfirmation.channel.parent.threads.fetch(thread.id).then(channel => channel.setAppliedTags([forumTag]))
                                     }
-                                    await inviteConfirmation.update({ content: `Канал создан: <#${thread.id}>\nЖелаю хорошего совместного времяпровождения!\n\n\`⚠️ После 30 минут от начала сбора канал закроется.\``, components: [] })
+                                    await inviteConfirmation.update({ content: `Канал создан: <#${thread.id}>\nЖелаю хорошего совместного времяпровождения!`, components: [] })
                                     const { PartySchema } = process.mongo;
                                     await PartySchema.create({
                                         ThreadId: thread.id,
