@@ -103,6 +103,14 @@ module.exports = {
         const webhookClient = new WebhookClient({ id: guildData.PartiesWebhookId, token: guildData.PartiesWebhookToken })
         const timerMSeconds = 120_000
         if (customId[0] !== interId) { return }
+        const guildWebhook = await interaction.guild.fetchWebhooks().then(webhooks => webhooks.find((webhook) => webhook.id === guildData.PartiesWebhookId))
+        if (typeof guildWebhook === 'undefined') {
+            interaction.reply({ content: "Вебхук не найден. Переназначте форум в настройках.", ephemeral: true })
+            return
+        }
+        if (guildWebhook.channelId !== interaction.channel.parent.id) {
+            guildWebhook.edit({ channel: interaction.channel.parent })
+        }
         // Перед созданием party
         switch (customId[1]) {
             case "start":
