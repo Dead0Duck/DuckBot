@@ -5,6 +5,7 @@ const Schema = new mongo.Schema({
     CreatorId: String,
     StartDate: Date,
     InputValues: Object,
+    PartNum: String,
     UserMentionsId: [String],
     RoleMentionsId: [String],
 });

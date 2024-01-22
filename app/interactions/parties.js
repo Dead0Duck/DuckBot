@@ -15,11 +15,57 @@ defaultValues = { activityName: "", participantsNumber: "", date: "", requiremen
 function formComponents(values = defaultValues) {
     return [
         new ActionRowBuilder({ components: [new TextInputBuilder({ value: values.activityName }).setCustomId('activityName').setLabel('Название активности').setStyle(TextInputStyle.Short).setMaxLength(30).setRequired(true)] }),
-        new ActionRowBuilder({ components: [new TextInputBuilder({ value: values.participantsNumber }).setCustomId('participantsNumber').setLabel('Количество участников').setStyle(TextInputStyle.Short).setMaxLength(50).setRequired(true)] }),
+        new ActionRowBuilder({ components: [new TextInputBuilder({ value: values.participantsNumber }).setCustomId('participantsNumber').setLabel('Количество участников').setStyle(TextInputStyle.Short).setMaxLength(7).setRequired(false)] }),
         new ActionRowBuilder({ components: [new TextInputBuilder({ value: values.date }).setCustomId('date').setLabel('Дата и время сбора [дд.мм.гггг чч:мм +/-ч]').setStyle(TextInputStyle.Short).setMaxLength(20).setRequired(true)] }),
         new ActionRowBuilder({ components: [new TextInputBuilder({ value: values.requirement }).setCustomId('requirement').setLabel('Требования').setStyle(TextInputStyle.Short).setMaxLength(50).setRequired(false)] }),
         new ActionRowBuilder({ components: [new TextInputBuilder({ value: values.tip }).setCustomId('tip').setLabel('Примечание').setStyle(TextInputStyle.Paragraph).setMaxLength(200).setRequired(false)] })
     ]
+}
+
+/**
+ * 
+ * @param {Array.<String>} inputPartNumber 
+ */
+function validatePartNumber(inputPartNumber) {
+    if (!inputPartNumber[0]) {
+        return ""
+    }
+    if (inputPartNumber.length > 2) {
+        throw "Ошибка в количестве участников. Попробуйте снова."
+    }
+    const numbers = []
+    inputPartNumber.forEach((number) => {
+        const numberInt = parseInt(number)
+        if (isNaN(numberInt)) {
+            throw "Ошибка в количестве участников. Попробуйте снова."
+        }
+        numbers.push(numberInt)
+    })
+
+    if (numbers.length === 1) {
+        return `не более ${numbers[0]}`
+    }
+
+    if (numbers[0] < 1 && numbers[1] < 1) {
+        throw `Минимум и максимум не могут быть одновременно 0. Попробуйте снова.`
+    }
+
+    if (numbers[0] === 0 || numbers[0] === numbers[1]) {
+        return `не более ${numbers[1]}`
+    }
+
+    if (numbers[1] === 0) {
+        return `не менее ${numbers[0]}`
+    }
+
+
+    if (numbers[0] > numbers[1]) {
+        throw `Минимальное количество не может быть больше максимального. Попробуйте снова.`
+    }
+
+
+    return `${numbers[0]} - ${numbers[1]}`
+
 }
 
 /**
@@ -36,7 +82,7 @@ function validateDate(inputDate) {
         throw "Разница с МСК указана неправильно. Попробуйте снова."
     }
     if (offset > 9 || offset < -15) {
-        throw "Вы указали несуществующий часовой пояс в поле для даты сбора. Попробуйте снова."
+        throw "Вы указали несуществующий часовой пояс в дате сбора. Попробуйте снова."
     }
     date = dayjs(`${inputDate[0]} ${inputDate[1]}`, 'DD-MM-YYYY HH:mm')
     offset = -offset - 3
@@ -56,9 +102,9 @@ function validateDate(inputDate) {
  * @param {String} userId
  * @param {dayjs} date 
  */
-function messageParty(values, stringInvites, userId, date) {
+function messageParty(values, stringInvites, partNum, userId, date) {
     return `* \`👑 Организатор:\` <@${userId}>\n` +
-        `* \`👥 Количество участников:\` ${values.participantsNumber}\n` +
+        (`* \`👥 Количество участников:\` ${partNum ? partNum : `без ограничений`}\n`) +
         `* \`🕐 Дата и время сбора:\` <t:${date.unix()}>\n` +
         (values.requirement.length > 0 ? `* \`⚠️ Требования:\` ${values.requirement}\n` : '') +
         (stringInvites.length > 0 ? `* \`✉️ Приглашаю:\` ${stringInvites}\n` : '') +
@@ -68,7 +114,7 @@ function messageParty(values, stringInvites, userId, date) {
 /**
  * @param {Collection|Array.<String>} users 
  * @param {Collection|Array.<String>} roles
- * @returns {mentions.<{stringInvites: Array.<String>, userMentions: Array.<String>, roleMentions: Array.<String>}>} 
+ * @returns {mentions.<{stringInvites: string, userMentions: Array.<String>, roleMentions: Array.<String>}>} 
  */
 function mentionsGen(users, roles) {
     stringInvites = ""
@@ -124,7 +170,9 @@ module.exports = {
                 const restartRow = new ActionRowBuilder({ components: [new ButtonBuilder({ custom_id: `${interId}:restart`, label: "Попробовать снова", style: ButtonStyle.Secondary })] })
                 const inputDate = values.date.split(" ")
                 let date
+                let partNum
                 try {
+                    partNum = validatePartNumber(values.participantsNumber.split("-"))
                     date = validateDate(inputDate)
                 } catch (e) {
                     const retryResponse = await interaction.reply({ content: typeof e === 'string' ? e : "Что-то пошло не так :/", ephemeral: true, components: [restartRow], fetchReply: true })
@@ -145,7 +193,7 @@ module.exports = {
                 const checkInfoResponse = await interaction.reply({
                     content: `Проверьте введённые данные. Диалог закроется <t:${dayjs().add(timerMSeconds, 'milliseconds').unix()}:R>.`, ephemeral: true, embeds: [new EmbedBuilder({
                         fields: [{ name: "Название активности", value: values.activityName },
-                        { name: "Количество участников", value: values.participantsNumber },
+                        { name: "Количество участников", value: partNum < 1 ? "_без ограничений_" : partNum },
                         { name: "Дата и время сбора", value: `<t:${date.unix()}>` },
                         { name: "Требования", value: values.requirement.length < 1 ? '_не указано_' : values.requirement },
                         { name: "Примечание", value: values.tip.length < 1 ? '_не указано_' : values.tip }]
@@ -203,7 +251,7 @@ module.exports = {
                             await webhookClient.send({
                                 threadName: values.activityName, username: inviteConfirmation.user.username,
                                 avatarURL: inviteConfirmation.user.avatarURL(),
-                                content: messageParty(values, stringInvites, inviteConfirmation.user.id, date),
+                                content: messageParty(values, stringInvites, partNum, inviteConfirmation.user.id, date),
                                 components: [new ActionRowBuilder({
                                     components: [
                                         new ButtonBuilder({ custom_id: `${interId}:deleteParty`, label: "Удалить", style: ButtonStyle.Danger }),
@@ -223,6 +271,7 @@ module.exports = {
                                         CreatorId: inviteConfirmation.user.id,
                                         StartDate: date,
                                         InputValues: values,
+                                        PartNum: partNum,
                                         UserMentionsId: userMentions,
                                         RoleMentionsId: roleMentions
                                     })
@@ -332,7 +381,9 @@ module.exports = {
                 const defaultValuesMentions = [].concat(partyData.UserMentionsId, partyData.RoleMentionsId)
                 interaction.fields.fields.map((field) => { Object.assign(values, { [field.customId]: field.value }) })
                 let date
+                let partNum
                 try {
+                    partNum = validatePartNumber(values.participantsNumber.split("-"))
                     date = validateDate(values.date.split(" "))
                 } catch (e) {
                     return await interaction.reply({ content: typeof e === 'string' ? e : "Что-то пошло не так :/", ephemeral: true })
@@ -369,12 +420,13 @@ module.exports = {
                     }
                     partyData.InputValues = values
                     partyData.StartDate = date
+                    partyData.PartNum = partNum
                     partyData.UserMentionsId = mentions.userMentions
                     partyData.RoleMentionsId = mentions.roleMentions
                     partyData.save()
 
                     webhookClient.editMessage(interaction.message, {
-                        content: messageParty(values, mentions.stringInvites, partyData.CreatorId, date), threadId: interaction.channel.id,
+                        content: messageParty(values, mentions.stringInvites, partNum, partyData.CreatorId, date), threadId: interaction.channel.id,
                     }).then(() => {
                         mentionsConfirmation.channel.edit({ name: values.activityName })
                     })
