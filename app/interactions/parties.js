@@ -114,9 +114,10 @@ function messageParty(values, stringInvites, partNum, userId, date) {
 /**
  * @param {Collection|Array.<String>} users 
  * @param {Collection|Array.<String>} roles
+ * @param {string} excludeId
  * @returns {mentions.<{stringInvites: string, userMentions: Array.<String>, roleMentions: Array.<String>}>} 
  */
-function mentionsGen(users, roles) {
+function mentionsGen(users, roles, excludeId) {
     stringInvites = ""
     const userMentions = []
     const roleMentions = []
@@ -132,6 +133,7 @@ function mentionsGen(users, roles) {
     if (typeof users !== 'undefined') {
         users.forEach((user) => {
             const userId = typeof user === 'string' ? user : user.id
+            if (userId === excludeId) return
             stringInvites += `<@${userId}> `
             userMentions.push(userId)
         })
@@ -246,7 +248,7 @@ module.exports = {
                             })
                             const inviteConfirmation = await inviteResponse.awaitMessageComponent({ filter: collectorFilter, time: timerMSeconds })
 
-                            const { stringInvites, userMentions, roleMentions } = mentionsGen(inviteConfirmation.users, inviteConfirmation.roles)
+                            const { stringInvites, userMentions, roleMentions } = mentionsGen(inviteConfirmation.users, inviteConfirmation.roles, inviteConfirmation.user.id)
 
                             await webhookClient.send({
                                 threadName: values.activityName, username: inviteConfirmation.user.username,
@@ -409,13 +411,13 @@ module.exports = {
                     let mentions
                     switch (customId[1]) {
                         case 'wipeEditInvite':
-                            mentions = mentionsGen(undefined, undefined)
+                            mentions = mentionsGen(undefined, undefined, mentionsConfirmation.user.id)
                             break
                         case 'editInvite':
-                            mentions = mentionsGen(mentionsConfirmation.users, mentionsConfirmation.roles)
+                            mentions = mentionsGen(mentionsConfirmation.users, mentionsConfirmation.roles, mentionsConfirmation.user.id)
                             break
                         case 'skipEditInvite':
-                            mentions = mentionsGen(partyData.UserMentionsId, partyData.RoleMentionsId)
+                            mentions = mentionsGen(partyData.UserMentionsId, partyData.RoleMentionsId, mentionsConfirmation.user.id)
                             break
                     }
                     partyData.InputValues = values
