@@ -152,12 +152,34 @@ async function RandomOwner(channel, textChannel, channelMembers, guildData)
 
 		UpdateMenu(textChannel, channel)
 		channel.send({content: `<@${oldOwner.id}> покинул канал. Канал передан <@${newOwner.id}>`, allowedMentions: { users: [newOwner.id] }});
+		VoiceLog(channel, 'Отключение от каналу', `Участник: <@${oldOwner.id}>\nНовый владелец: ${newOwner.id}`)
 	} catch (e) {
 		console.error(e)
 		return false
 	}
 
 	return true
+}
+
+let logChannel
+async function VoiceLog(channel, title, desc = '')
+{
+	const { GuildSchema } = process.mongo;
+	const guildData = await GuildSchema.findOne({ Guild: channel.guild.id })
+	if (!guildData || !guildData.Settings.VoiceLogs) return false
+	
+	if (!logChannel || logChannel?.id != guildData.Settings.VoiceLogs)
+	{
+		logChannel = await channel.guild.channels.fetch(guildData.Settings.VoiceLogs)
+	}
+
+	const embed = new EmbedBuilder()
+		.setColor(0xFF0000)
+		.setTitle(title)
+		.setDescription(`Канал: ${channel.name} (<#${channel.id}>)\nID Канала: ${channel.id}\n${desc}`)
+		.setTimestamp(Date.now())
+
+	await logChannel.send({embeds: [embed], allowedMentions: { repliedUser: false }})
 }
 
 /* ========================================================================== */
@@ -189,6 +211,7 @@ async function SetVoiceState(interaction, voiceChannel, newState)
 	await voiceChannel.permissionOverwrites.edit(guild.id, newPerms)
 	await UpdateMenu(false, voiceChannel)
 	await interaction.reply({ content: `Канал теперь ${stateText[ newState ]}.`, ephemeral: true })
+	VoiceLog(voiceChannel, 'Изменение канала', `Видимость канала: ${stateText[ newState ]}`)
 	return true
 }
 
@@ -234,6 +257,7 @@ async function SetVoiceOwner(interaction, voiceChannel, newOwner)
 	
 	await UpdateMenu(textChannel, voiceChannel)
 	await voiceChannel.send({ content: `Канал передан <@${newOwner.id}>.`, allowedMentions: { users: [newOwner.id] } })
+	VoiceLog(voiceChannel, 'Передача канала', `Новый владелец: <@${newOwner.id}>`)
 	return true
 }
 
@@ -257,6 +281,7 @@ async function VoiceBan(interaction, voiceChannel, member)
 		member.voice.disconnect("Забанен в этом канале.")
 
 	await interaction.reply({ content: `<@${member.id}> был ${isBanned ? "разбанен" : "забанен"}.`, allowedMentions: { users: [member.id] }, ephemeral: true })
+	VoiceLog(voiceChannel, 'Бан в канале', `<@${member.id}> был ${isBanned ? "разбанен" : "забанен"}`)
 	return true
 }
 
@@ -275,9 +300,10 @@ async function VoiceKick(interaction, voiceChannel, member)
 		return true
 	}
 
-	member.voice.disconnect("Забанен в этом канале.")
+	member.voice.disconnect("Кикнут из канала.")
 
 	await interaction.reply({ content: `Кикаем <@${member.id}>.`, allowedMentions: { users: [member.id] }, ephemeral: true })
+	VoiceLog(voiceChannel, 'Кик в канале', `Участник: <@${member.id}>`)
 	return true
 }
 
@@ -291,6 +317,7 @@ module.exports = {
 	GetVoiceChannel,
 	RandomOwner,
 	UpdateMenu,
+	VoiceLog,
 
 	Commands: {
 		SetVoiceState,

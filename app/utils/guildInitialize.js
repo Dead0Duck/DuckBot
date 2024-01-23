@@ -125,6 +125,7 @@ async function VoiceChannelsFix(guild)
 
 			if (channel.members.size == 0)
 			{
+				VoiceChannels.VoiceLog(channel, 'Удаление канала')
 				channel.delete('Участников не осталось')
 				return
 			}

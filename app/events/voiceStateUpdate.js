@@ -1,4 +1,4 @@
-const { EmbedBuilder, Events, ChannelType, PermissionFlagsBits } = require('discord.js');
+const { EmbedBuilder, Events, ChannelType, PermissionFlagsBits, channelLink } = require('discord.js');
 const { VoiceChannels } = require('../utils');
 
 async function CreateVoice(oldState, newState, guildData)
@@ -58,7 +58,7 @@ async function CreateVoice(oldState, newState, guildData)
 		], topic: voiceChannel.id })
 
 		const embed = new EmbedBuilder()
-			.setColor(0x0099FF)
+			.setColor(0x00FFFF)
 			.setTitle('Управление личной комнатой')
 			.setDescription(`Подготовка меню...\nСоздатель: <@${member.id}>`)
 			.setTimestamp(Date.now())
@@ -67,6 +67,8 @@ async function CreateVoice(oldState, newState, guildData)
 		VoiceChannels.UpdateMenu(textChannel, voiceChannel)
 
 		member.voice.setChannel(voiceChannel)
+		VoiceChannels.VoiceLog(voiceChannel, 'Создание комнаты', `Создатель: <@${member.id}>`)
+
 		return true
 	} catch(e) {
 		console.error(e)
@@ -84,6 +86,7 @@ async function JoinVoice(oldState, newState, guildData)
 	if (member.id == VoiceChannels.GetOwner(channel)) return false
 
 	channel.send({content: `<@${member.id}> присоединился к каналу.`, allowedMentions: { repliedUser: false }})
+	VoiceChannels.VoiceLog(voiceChannel, 'Присоединение к каналу', `Участник: <@${member.id}>`)
 }
 
 async function LeaveVoice(oldState, newState, guildData)
@@ -100,6 +103,8 @@ async function LeaveVoice(oldState, newState, guildData)
 		let channelMembers = channel.members.filter(m => !m.user.bot)
 		if (channelMembers.size <= 0)
 		{
+			VoiceChannels.VoiceLog(channel, 'Удаление канала')
+
 			textChannel.delete('Владелец покинул канал.');
 			channel.delete('Владелец покинул канал.');
 			return true
@@ -115,6 +120,8 @@ async function LeaveVoice(oldState, newState, guildData)
 		}
 
 		channel.send({content: `<@${member.id}> покинул канал.`, allowedMentions: { repliedUser: false }});
+		VoiceChannels.VoiceLog(voiceChannel, 'Отключение от каналу', `Участник: <@${member.id}>`)
+
 		return true
 	} catch(e) {
 		console.error(e)

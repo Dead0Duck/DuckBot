@@ -8,9 +8,7 @@ module.exports = {
 		require("../deploy-commands")(client.user.id)
 
 		process.disClient = client
-
 		process.mongo = require('../mongodb')
-		const { GuildSchema } = process.mongo
 
 		const guilds = client.guilds.cache.map(guild => guild);
 		guilds.forEach(async guild => {

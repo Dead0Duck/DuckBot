@@ -1,4 +1,4 @@
-const { ButtonBuilder, ButtonStyle, ActionRowBuilder, EmbedBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, TextInputBuilder, ModalBuilder, TextInputStyle } = require('discord.js');
+const { ButtonBuilder, ButtonStyle, ActionRowBuilder, EmbedBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, TextInputBuilder, ModalBuilder, TextInputStyle, ChannelType } = require('discord.js');
 
 class BaseSetting {
     /**
@@ -104,13 +104,32 @@ const Settings = [
                     new StringSelectMenuOptionBuilder()
                         .setLabel(channel.name)
                         .setValue(channel.id)
-                        .setDescription(typeof channel.parent === 'undefined' ? "Не в категории" : `В категории "${channel.parent.name}"`)
+                        .setDescription(channel.parent == null ? "Не в категории" : `В категории "${channel.parent.name}"`)
                 )
             })
             return channelSelect
         },
         (guildSettings) => {
             return `${typeof guildSettings.PartiesChannel === 'undefined' ? "не указан" : `<#${guildSettings.PartiesChannel}>`} `
+        }
+    ),
+
+	new SelectStringSetting("Канал для логов личных комнат", "VoiceLogs", "Выбор канала для логов действий в личных комнат",
+        (interaction, guildId) => {
+            const channelSelect = new StringSelectMenuBuilder()
+                .setMaxValues(1)
+            interaction.client.guilds.resolve(guildId).channels.cache.filter(x => x.type == ChannelType.GuildText).map((channel) => {
+                channelSelect.addOptions(
+                    new StringSelectMenuOptionBuilder()
+                        .setLabel(channel.name)
+                        .setValue(channel.id)
+                        .setDescription(channel.parent == null ? "Не в категории" : `В категории "${channel.parent.name}"`)
+                )
+            })
+            return channelSelect
+        },
+        (guildSettings) => {
+            return `${typeof guildSettings.VoiceLogs === 'undefined' ? "не указан" : `<#${guildSettings.VoiceLogs}>`} `
         }
     ),
 
