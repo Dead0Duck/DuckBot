@@ -110,21 +110,7 @@ async function LeaveVoice(oldState, newState, guildData)
 
 		if (isVoiceOwner)
 		{
-			const newOwner = channelMembers.random();
-			await channel.permissionOverwrites.edit(newOwner.id, {
-				ManageChannels: true,
-				MoveMembers: true,
-				ViewChannel: true,
-				Connect: true
-			})
-			await channel.permissionOverwrites.edit(member.id, {
-				ManageChannels: null,
-				MoveMembers: null,
-				Connect: null,
-			})
-
-			VoiceChannels.UpdateMenu(textChannel, channel)
-			channel.send({content: `<@${member.id}> покинул канал. Канал передан <@${newOwner.id}>`, allowedMentions: { users: [newOwner.id] }});
+			await VoiceChannels.RandomOwner(channel, textChannel, channelMembers, guildData)
 			return true
 		}
 
