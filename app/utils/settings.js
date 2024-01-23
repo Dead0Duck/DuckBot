@@ -1,4 +1,5 @@
-const { ButtonBuilder, ButtonStyle, ActionRowBuilder, EmbedBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, TextInputBuilder, ModalBuilder, TextInputStyle, ChannelType } = require('discord.js');
+const { ChannelFlagsBitField, ButtonBuilder, ButtonStyle, ActionRowBuilder, EmbedBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, TextInputBuilder, ModalBuilder, TextInputStyle, ChannelType } = require('discord.js');
+const fs = require('fs');
 
 class BaseSetting {
     /**
@@ -125,6 +126,59 @@ const Settings = [
         },
         (guildSettings) => {
             return `${typeof guildSettings.PartiesChannel === 'undefined' ? "не указан" : `<#${guildSettings.PartiesChannel}>`} `
+        }, (interaction, guildId) => {
+            const partyFAQString = fs.readFileSync('bigstrings/partyfaq.md').toString('utf-8');
+            interaction.client.channels.fetch(interaction.values[0]).then((channel) => {
+                channel.threads.create({
+                    name: "Хочешь найти компанию? Кликни на меня!", message: {
+                        content: partyFAQString, components: [
+                            new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('pt:start').setLabel('Объявить о поиске компании').setStyle(ButtonStyle.Primary))
+                        ]
+                    }
+                }).then(async (thread) => {
+                    const { GuildSchema } = process.mongo;
+                    const guildData = await GuildSchema.findOne({ Guild: guildId })
+                    if (typeof guildData.PartiesThread !== 'undefined') {
+                        interaction.client.channels.fetch(guildData.PartiesThread).then((channel) => { channel.delete() }).catch(console.error)
+                    }
+                    interaction.guild.fetchWebhooks().then(async (webhooks) => {
+                        const webhook = webhooks.find(item => item.id === guildData.PartiesWebhookId)
+                        if (typeof webhook !== 'undefined') {
+                            await webhook.edit({ channel: thread.parent.id })
+                        } else {
+                            thread.parent.createWebhook({ name: 'DuckBot Parties' }).then((webhook) => {
+                                guildData.PartiesWebhookId = webhook.id
+                                guildData.PartiesWebhookToken = webhook.token
+                                guildData.save()
+                                interaction.followUp({ content: '> ⚠️ Создан новый вебхук `DuckBot Parties`. Ни при каких обстоятельствах **не удаляйте и не изменяйте его**. В противном случае редактировать объявления **будет невозможно**.', ephemeral: true })
+
+                            })
+                        }
+                    })
+                    guildData.PartiesThread = thread.id
+                    guildData.save()
+                    const pinnedThread = thread.parent.threads.cache.find(thread => thread.flags.has(ChannelFlagsBitField.Flags.Pinned))
+                    if (typeof pinnedThread !== 'undefined') {
+                        pinnedThread.unpin()
+                    }
+                    thread.pin()
+                }).catch(console.error)
+            })
+        }, async (interaction, guildId) => {
+            const { GuildSchema } = process.mongo;
+            const guildData = await GuildSchema.findOne({ Guild: guildId })
+            interaction.client.channels.fetch(guildData.PartiesThread).then((channel) => { channel.delete() }).catch(console.error)
+            interaction.guild.fetchWebhooks().then(async (webhooks) => {
+                const webhook = webhooks.find(item => item.id === guildData.PartiesWebhookId)
+                if (typeof webhook !== 'undefined') {
+                    await webhook.delete()
+                }
+                guildData.PartiesWebhookId = undefined
+                guildData.PartiesWebhookToken = undefined
+                guildData.save()
+            })
+            guildData.PartiesThread = undefined
+            guildData.save()
         }
     ),
 

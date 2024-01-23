@@ -5,4 +5,5 @@ mongoose.connect(`mongodb://mongo_db:27017/?authMechanism=DEFAULT&retryWrites=tr
 module.exports = {
 	GuildSchema: require('./models/Guild'),
 	UserSchema: require('./models/User'),
+	PartySchema: require('./models/Party')
 }
