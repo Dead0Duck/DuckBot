@@ -1,4 +1,4 @@
-const { ChannelFlagsBitField, ButtonBuilder, ButtonStyle, ActionRowBuilder, EmbedBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, TextInputBuilder, ModalBuilder, TextInputStyle } = require('discord.js');
+const { ChannelFlagsBitField, ButtonBuilder, ButtonStyle, ActionRowBuilder, EmbedBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, TextInputBuilder, ModalBuilder, TextInputStyle, ChannelType } = require('discord.js');
 const fs = require('fs');
 
 class BaseSetting {
@@ -29,6 +29,10 @@ class BooleanSetting extends BaseSetting {
      * @param {string} falseLabel - Подпись кнопки false.
      * @param {function (value, interaction, guildId)} onSuccess - Функция, которая выполняется при успешном апдейте параметра.
      * @param {function (interaction, guildId)} onDelete - Функция, которая выполняется при успешном удалении параметра.
+     * @example
+     * new BooleanSetting("Хот-дог", "TestBoolean", "Вы хотите хот-дог?", "Да, очень хочу", "Нет, спасибо, я веган",
+        (value, interaction) => { interaction.followUp({ content: value === 'true' ? "🌭" : "Ок, мне больше достанется.", ephemeral: true }) },
+        (interaction) => { interaction.followUp("Печально, что вы так с хот-догом поступаете.") })
      */
     constructor(label, field, description, trueLabel, falseLabel, onSuccess = () => { }, onDelete = () => { }) {
         super(label, field, description, onSuccess, onDelete)
@@ -85,6 +89,16 @@ class TextInputSetting extends BaseSetting {
      * @param {function (interaction)} validate - Функция, которая вызывается для проверки введённых данных. Если всё в порядке, то возвращает 0, а если нет, то должна вернуть string с описанием ошибки.
      * @param {function (interaction, guildId)} onSuccess - Функция, которая выполняется при успешном апдейте параметра.
      * @param {function (interaction, guildId)} onDelete - Функция, которая выполняется при успешном удалении параметра.
+     * @example
+     * new TextInputSetting("Любимая еда", "FavFood", () => {
+        return new ModalBuilder({
+            title: "Любимая еда", components: [
+                new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('food').setLabel('Любимая еда').setStyle(TextInputStyle.Short).setMaxLength(50))
+            ]
+        })
+    }, (guildSettings) => {
+        return `${typeof guildSettings.FavFood === 'undefined' ? "не указана" : guildSettings.FavFood} `
+    })
      */
     constructor(label, field, modal, value, validate = () => { return 0 }, onSuccess = () => { }, onDelete = () => { }) {
         super(label, field, onSuccess, onDelete)
@@ -105,7 +119,7 @@ const Settings = [
                     new StringSelectMenuOptionBuilder()
                         .setLabel(channel.name)
                         .setValue(channel.id)
-                        .setDescription(typeof channel.parent === 'undefined' ? "Не в категории" : `В категории "${channel.parent.name}"`)
+                        .setDescription(channel.parent == null ? "Не в категории" : `В категории "${channel.parent.name}"`)
                 )
             })
             return channelSelect
@@ -168,19 +182,24 @@ const Settings = [
         }
     ),
 
-    new BooleanSetting("Хот-дог", "TestBoolean", "Вы хотите хот-дог?", "Да, очень хочу", "Нет, спасибо, я веган",
-        (value, interaction) => { interaction.followUp({ content: value === 'true' ? "🌭" : "Ок, мне больше достанется.", ephemeral: true }) },
-        (interaction) => { interaction.followUp("Печально, что вы так с хот-догом поступаете.") }),
-
-    new TextInputSetting("Любимая еда", "FavFood", () => {
-        return new ModalBuilder({
-            title: "Любимая еда", components: [
-                new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('test').setLabel('Test').setStyle(TextInputStyle.Short).setMaxLength(50))
-            ]
-        })
-    }, (guildSettings) => {
-        return `${typeof guildSettings.FavFood === 'undefined' ? "не указан" : guildSettings.FavFood} `
-    })
+    new SelectStringSetting("Канал для логов личных комнат", "VoiceLogs", "Выбор канала для логов действий в личных комнат",
+        (interaction, guildId) => {
+            const channelSelect = new StringSelectMenuBuilder()
+                .setMaxValues(1)
+            interaction.client.guilds.resolve(guildId).channels.cache.filter(x => x.type == ChannelType.GuildText).map((channel) => {
+                channelSelect.addOptions(
+                    new StringSelectMenuOptionBuilder()
+                        .setLabel(channel.name)
+                        .setValue(channel.id)
+                        .setDescription(channel.parent == null ? "Не в категории" : `В категории "${channel.parent.name}"`)
+                )
+            })
+            return channelSelect
+        },
+        (guildSettings) => {
+            return `${typeof guildSettings.VoiceLogs === 'undefined' ? "не указан" : `<#${guildSettings.VoiceLogs}>`} `
+        }
+    )
 ]
 
 const chunk = (arr, size) =>

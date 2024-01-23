@@ -1,12 +1,6 @@
 const { SlashCommandBuilder } = require('discord.js');
 const { VoiceChannels } = require('../../utils');
 
-const stateText = {
-	"hide": "скрыт",
-	"lock": "закрыт",
-	"unlock": "открыт"
-}
-
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('voice')
@@ -27,17 +21,17 @@ module.exports = {
 			subcommand
 				.setName('ban')
 				.setDescription('Забанить пользователя, что ограничит ему доступ к личному каналу.')
-				.addUserOption(option => option.setName('target').setDescription('Пользователь')))
+				.addUserOption(option => option.setName('target').setDescription('Пользователь').setRequired(true)))
 		.addSubcommand(subcommand =>
 			subcommand
 				.setName('kick')
 				.setDescription('Выгнать пользователя из личного канала.')
-				.addUserOption(option => option.setName('target').setDescription('Пользователь')))
+				.addUserOption(option => option.setName('target').setDescription('Пользователь').setRequired(true)))
 		.addSubcommand(subcommand =>
 			subcommand
 				.setName('owner')
 				.setDescription('Передать права владельца на личный канал.')
-				.addUserOption(option => option.setName('target').setDescription('Пользователь'))),
+				.addUserOption(option => option.setName('target').setDescription('Пользователь').setRequired(true))),
 	async execute(interaction) {
 		let member = interaction.member;
 		let state = member.voice;
@@ -60,9 +54,18 @@ module.exports = {
 			case "hide":
 			case "lock":
 			case "unlock":
-				await VoiceChannels.Commands.SetVoiceState(channel, cmd);
-				await interaction.reply({ content: `Канал теперь ${ stateText[cmd] }.`, ephemeral: true })
+				await VoiceChannels.Commands.SetVoiceState(interaction, channel, cmd);
 				return;
+
+			case "ban":
+				await VoiceChannels.Commands.VoiceBan(interaction, channel, interaction.options.getMember('target'))
+				break;
+			case "kick":
+				await VoiceChannels.Commands.VoiceKick(interaction, channel, interaction.options.getMember('target'))
+				break;
+			case "owner":
+				await VoiceChannels.Commands.SetVoiceOwner(interaction, channel, interaction.options.getMember('target'))
+				break;
 		}
 	},
 };

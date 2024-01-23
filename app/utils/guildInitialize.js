@@ -1,7 +1,9 @@
 const { ChannelType, PermissionFlagsBits, Guild } = require("discord.js");
 const Settings = require('./settings');
+const VoiceChannels = require('./voiceChannels');
 
 /**
+ * Создать личные комнаты, если их нет
  * @param {Guild} guild
  */
 async function VoiceChannel(guild)
@@ -92,12 +94,63 @@ async function VoiceChannel(guild)
 		// owner.send(`Приветствую, я DuckBot. Я создал для вас категорию с личными каналами. Она сейчас скрыта от посторонних глаз, дабы вы могли настроить всё.`)
 	} catch (e) {
 		console.error(e)
+		return false
 	}
 
 	return true
 }
 
 /**
+ * Удалить личные комнаты, если в них нет пользователей
+ * @param {Guild} guild 
+ */
+async function VoiceChannelsFix(guild)
+{
+	const { GuildSchema } = process.mongo;
+
+	try {
+		let voiceCat = null
+		let voiceTexCat = null
+
+		const guildData = await GuildSchema.findOne({ Guild: guild.id })
+		if (!guildData)
+			throw "No guild data!"
+
+		voiceCat = await guild.channels.fetch(guildData.VoiceCategory)
+		voiceTexCat = await guild.channels.fetch(guildData.VoiceTextCategory)
+
+		voiceCat.children.cache.each(channel => {
+			if (channel.id == guildData.VoiceCreate || channel.id == guildData.VoiceCreateClosed)
+				return;
+
+			if (channel.members.size == 0)
+			{
+				VoiceChannels.VoiceLog(channel, 'Удаление канала')
+				channel.delete('Участников не осталось')
+				return
+			}
+
+			let ownerId = VoiceChannels.GetOwner(channel)
+			if (channel.members.has(ownerId))
+				return;
+
+			VoiceChannels.RandomOwner(channel)
+		})
+
+		voiceTexCat.children.cache.each(channel => {
+			if (!voiceCat.children.cache.has(channel.topic))
+				channel.delete('Привязанного канала нет')
+		})
+	} catch(e) {
+		console.error(e)
+		return false
+	}
+
+	return true
+}
+
+/**
+ * Создать в бд запись для настроек и отправить их владельцу, если записи не было
  * @param {Guild} guild
  */
 async function _settings(guild)
@@ -148,7 +201,9 @@ module.exports = {
 				})
 			}
 
-			await VoiceChannel(guild)
+			if (await VoiceChannel(guild))
+				VoiceChannelsFix(guild)
+
 			await _settings(guild)
 			return true
 		} catch (e) {
