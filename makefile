@@ -7,6 +7,10 @@ run:
 	@docker compose up -d
 	@docker attach duckbot
 
+restart:
+	@make stop
+	@make run
+
 push:
 	@docker push ghcr.io/dead0duck/duckbot:latest
 
