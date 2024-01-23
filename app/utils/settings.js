@@ -28,6 +28,10 @@ class BooleanSetting extends BaseSetting {
      * @param {string} falseLabel - Подпись кнопки false.
      * @param {function (value, interaction, guildId)} onSuccess - Функция, которая выполняется при успешном апдейте параметра.
      * @param {function (interaction, guildId)} onDelete - Функция, которая выполняется при успешном удалении параметра.
+     * @example
+     * new BooleanSetting("Хот-дог", "TestBoolean", "Вы хотите хот-дог?", "Да, очень хочу", "Нет, спасибо, я веган",
+        (value, interaction) => { interaction.followUp({ content: value === 'true' ? "🌭" : "Ок, мне больше достанется.", ephemeral: true }) },
+        (interaction) => { interaction.followUp("Печально, что вы так с хот-догом поступаете.") })
      */
     constructor(label, field, description, trueLabel, falseLabel, onSuccess = () => { }, onDelete = () => { }) {
         super(label, field, description, onSuccess, onDelete)
@@ -84,6 +88,16 @@ class TextInputSetting extends BaseSetting {
      * @param {function (interaction)} validate - Функция, которая вызывается для проверки введённых данных. Если всё в порядке, то возвращает 0, а если нет, то должна вернуть string с описанием ошибки.
      * @param {function (interaction, guildId)} onSuccess - Функция, которая выполняется при успешном апдейте параметра.
      * @param {function (interaction, guildId)} onDelete - Функция, которая выполняется при успешном удалении параметра.
+     * @example
+     * new TextInputSetting("Любимая еда", "FavFood", () => {
+        return new ModalBuilder({
+            title: "Любимая еда", components: [
+                new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('food').setLabel('Любимая еда').setStyle(TextInputStyle.Short).setMaxLength(50))
+            ]
+        })
+    }, (guildSettings) => {
+        return `${typeof guildSettings.FavFood === 'undefined' ? "не указана" : guildSettings.FavFood} `
+    })
      */
     constructor(label, field, modal, value, validate = () => { return 0 }, onSuccess = () => { }, onDelete = () => { }) {
         super(label, field, onSuccess, onDelete)
@@ -114,7 +128,7 @@ const Settings = [
         }
     ),
 
-	new SelectStringSetting("Канал для логов личных комнат", "VoiceLogs", "Выбор канала для логов действий в личных комнат",
+    new SelectStringSetting("Канал для логов личных комнат", "VoiceLogs", "Выбор канала для логов действий в личных комнат",
         (interaction, guildId) => {
             const channelSelect = new StringSelectMenuBuilder()
                 .setMaxValues(1)
@@ -131,21 +145,7 @@ const Settings = [
         (guildSettings) => {
             return `${typeof guildSettings.VoiceLogs === 'undefined' ? "не указан" : `<#${guildSettings.VoiceLogs}>`} `
         }
-    ),
-
-    new BooleanSetting("Хот-дог", "TestBoolean", "Вы хотите хот-дог?", "Да, очень хочу", "Нет, спасибо, я веган",
-        (value, interaction) => { interaction.followUp({ content: value === 'true' ? "🌭" : "Ок, мне больше достанется.", ephemeral: true }) },
-        (interaction) => { interaction.followUp("Печально, что вы так с хот-догом поступаете.") }),
-
-    new TextInputSetting("Любимая еда", "FavFood", () => {
-        return new ModalBuilder({
-            title: "Любимая еда", components: [
-                new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('test').setLabel('Test').setStyle(TextInputStyle.Short).setMaxLength(50))
-            ]
-        })
-    }, (guildSettings) => {
-        return `${typeof guildSettings.FavFood === 'undefined' ? "не указан" : guildSettings.FavFood} `
-    })
+    )
 ]
 
 const chunk = (arr, size) =>
