@@ -220,10 +220,11 @@ module.exports = {
                             if (tags.length > 0) {
                                 const tagsSelect = new StringSelectMenuBuilder().setCustomId(`${interId}:tag`).setMaxValues(1)
                                 tags.forEach((tag) => {
-                                    // FIXME: Не работает с тэгами без эмодзи, @relitrix
-                                    tagsSelect.addOptions(
-                                        new StringSelectMenuOptionBuilder().setLabel(tag.name).setValue(tag.id).setEmoji(tag.emoji.id == null ? tag.emoji.name : tag.emoji.id)
-                                    )
+                                    const optionTag = new StringSelectMenuOptionBuilder().setLabel(tag.name).setValue(tag.id)
+                                    if (tag.emoji) {
+                                        optionTag.setEmoji(tag.emoji.id == null ? tag.emoji.name : tag.emoji.id)
+                                    }
+                                    tagsSelect.addOptions(optionTag)
                                 })
                                 const tagResponse = await confirmation.update({
                                     content: `Выберите соответствующий тег для вашей активности. Диалог закроется <t:${dayjs().add(timerMSeconds, 'milliseconds').unix()}:R>.`, components: [
