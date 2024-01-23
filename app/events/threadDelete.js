@@ -5,5 +5,6 @@ module.exports = {
     name: Events.ThreadDelete,
     execute: async (thread) => {
         await Parties.checkOne({ "PartiesThread": thread.id })
+        await Parties.checkOneParty(thread.id)
     }
 }

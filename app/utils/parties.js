@@ -29,5 +29,21 @@ module.exports = {
                 }
             })
         }
+    },
+    checkOneParty: async (threadId) => {
+        const { PartySchema } = process.mongo
+        const partyData = await PartySchema.findOne({ ThreadId: threadId })
+        if (partyData) {
+            await PartySchema.deleteOne({ ThreadId: threadId })
+        }
+    },
+    checkAllParties: async (client) => {
+        const { PartySchema } = process.mongo
+        const partiesData = await PartySchema.find({ ThreadId: { $exists: true } })
+        partiesData.forEach(async (partyData) => {
+            client.channels.fetch(partyData.ThreadId).catch(async () => {
+                await PartySchema.deleteOne({ ThreadId: partyData.ThreadId })
+            })
+        })
     }
 }

@@ -11,6 +11,7 @@ module.exports = {
 		process.mongo = require('../mongodb')
 
 		await Parties.checkMany(client)
+		await Parties.checkAllParties(client)
 
 		const guilds = client.guilds.cache.map(guild => guild);
 		guilds.forEach(async guild => {
