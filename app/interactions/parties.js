@@ -1,7 +1,9 @@
 const { ActionRowBuilder, TextInputBuilder, ModalBuilder, TextInputStyle, ButtonBuilder, ButtonStyle, ComponentType, EmbedBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, DiscordjsErrorCodes, MentionableSelectMenuBuilder, WebhookClient, PermissionsBitField, Collection } = require('discord.js');
 const dayjs = require('dayjs')
 const customParseFormat = require('dayjs/plugin/customParseFormat')
+const isBetween = require('dayjs/plugin/isBetween')
 dayjs.extend(customParseFormat)
+dayjs.extend(isBetween)
 
 const interId = 'pt'
 
@@ -41,29 +43,21 @@ function validatePartNumber(inputPartNumber) {
         }
         numbers.push(numberInt)
     })
-
     if (numbers.length === 1) {
         return `не более ${numbers[0]}`
     }
-
     if (numbers[0] < 1 && numbers[1] < 1) {
         throw `Минимум и максимум не могут быть одновременно 0. Попробуйте снова.`
     }
-
     if (numbers[0] === 0 || numbers[0] === numbers[1]) {
         return `не более ${numbers[1]}`
     }
-
     if (numbers[1] === 0) {
         return `не менее ${numbers[0]}`
     }
-
-
     if (numbers[0] > numbers[1]) {
         throw `Минимальное количество не может быть больше максимального. Попробуйте снова.`
     }
-
-
     return `${numbers[0]} - ${numbers[1]}`
 
 }
@@ -92,6 +86,9 @@ function validateDate(inputDate) {
     }
     if (date.isBefore(new Date())) {
         throw "Вы что, из прошлого? Укажите дату сбора правильно."
+    }
+    if (!(date.isBetween(dayjs(), dayjs().add(1, 'month')))) {
+        throw "Вы не можете запланировать дату сбора за более чем месяц."
     }
     return date
 }
@@ -177,6 +174,9 @@ module.exports = {
                     partNum = validatePartNumber(values.participantsNumber.split("-"))
                     date = validateDate(inputDate)
                 } catch (e) {
+                    if (typeof e != 'string') {
+                        console.error(e)
+                    }
                     const retryResponse = await interaction.reply({ content: typeof e === 'string' ? e : "Что-то пошло не так :/", ephemeral: true, components: [restartRow], fetchReply: true })
                     await retryResponse.awaitMessageComponent({ filter: collectorFilter, time: 300_000 }).then((confirmation) => {
                         interaction.deleteReply()
@@ -189,6 +189,9 @@ module.exports = {
                         }
                     }).catch(async (e) => {
                         await interaction.editReply({ content: typeof e === 'string' ? e : "Что-то пошло не так :/", ephemeral: true, components: [] })
+                        if (typeof e != 'string') {
+                            console.error(e)
+                        }
                     })
                     return
                 }
@@ -217,7 +220,7 @@ module.exports = {
                             if (tags.length > 0) {
                                 const tagsSelect = new StringSelectMenuBuilder().setCustomId(`${interId}:tag`).setMaxValues(1)
                                 tags.forEach((tag) => {
-									// FIXME: Не работает с тэгами без эмодзи, @relitrix
+                                    // FIXME: Не работает с тэгами без эмодзи, @relitrix
                                     tagsSelect.addOptions(
                                         new StringSelectMenuOptionBuilder().setLabel(tag.name).setValue(tag.id).setEmoji(tag.emoji.id == null ? tag.emoji.name : tag.emoji.id)
                                     )
@@ -389,7 +392,11 @@ module.exports = {
                     partNum = validatePartNumber(values.participantsNumber.split("-"))
                     date = validateDate(values.date.split(" "))
                 } catch (e) {
-                    return await interaction.reply({ content: typeof e === 'string' ? e : "Что-то пошло не так :/", ephemeral: true })
+                    if (typeof e !== 'string') {
+                        console.error(e)
+                    }
+                    await interaction.reply({ content: typeof e === 'string' ? e : "Что-то пошло не так :/", ephemeral: true })
+                    return
                 }
                 const mentionsResponse = await interaction.reply({
                     content: `Выберите тех, кого приглашаете. Диалог закроется <t:${dayjs().add(timerMSeconds, 'milliseconds').unix()}:R>.`, components: [
