@@ -41,8 +41,9 @@ module.exports = {
         const { PartySchema } = process.mongo
         const partiesData = await PartySchema.find({ ThreadId: { $exists: true } })
         partiesData.forEach(async (partyData) => {
-            client.channels.fetch(partyData.ThreadId).catch(async () => {
-                await PartySchema.deleteOne({ ThreadId: partyData.ThreadId })
+            client.channels.fetch(partyData.ThreadId).catch(async (e) => {
+                if (e.code === 10003)
+                    await PartySchema.deleteOne({ ThreadId: partyData.ThreadId })
             })
         })
     }
