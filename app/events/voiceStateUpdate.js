@@ -40,6 +40,7 @@ async function CreateVoice(oldState, newState, guildData)
 				],
 			}
 		]})
+		// await VoiceChannels.VoiceEmojiName(voiceChannel)
 
 		let textChannel = await guild.channels.create({ name: 'меню комнаты', parent: guildData.VoiceTextCategory, type: ChannelType.GuildText, permissionOverwrites: [
 			{

@@ -217,6 +217,7 @@ module.exports = {
                             if (tags.length > 0) {
                                 const tagsSelect = new StringSelectMenuBuilder().setCustomId(`${interId}:tag`).setMaxValues(1)
                                 tags.forEach((tag) => {
+									// FIXME: Не работает с тэгами без эмодзи, @relitrix
                                     tagsSelect.addOptions(
                                         new StringSelectMenuOptionBuilder().setLabel(tag.name).setValue(tag.id).setEmoji(tag.emoji.id == null ? tag.emoji.name : tag.emoji.id)
                                     )

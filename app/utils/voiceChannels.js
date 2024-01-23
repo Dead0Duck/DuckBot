@@ -182,13 +182,57 @@ async function VoiceLog(channel, title, desc = '')
 	await logChannel.send({embeds: [embed], allowedMentions: { repliedUser: false }})
 }
 
+const emojiRegex = /([\uE000-\uF8FF]|\uD83C[\uDF00-\uDFFF]|\uD83D[\uDC00-\uDDFF])/g;
+const stateEmojis = {
+	'hide': "👻",
+	"lock": "🔒",
+	"unlock": "🔓",
+}
+async function VoiceEmojiName(channel)
+{
+	try {
+		const oldName = channel.name
+		let name = channel.name
+
+		let emojiPos = name.search(emojiRegex)
+		let emoji = emojiPos > -1 && name.match(emojiRegex)[0]
+		if (emojiPos == 0 && Object.values(stateEmojis).includes(emoji))
+		{
+			name = name.substring(emoji.length).trim()
+		}
+
+		const voicePerms = channel.permissionOverwrites.cache
+		const everyonePerms = voicePerms.find(p => p.id == channel.guild.id)
+
+		const isHidden = everyonePerms?.deny.has(PermissionFlagsBits.ViewChannel)
+		const isClosed = everyonePerms?.deny.has(PermissionFlagsBits.Connect)
+
+		let nameEmoji = stateEmojis.unlock
+		if (isHidden)
+			nameEmoji = stateEmojis.hide
+		else if (isClosed)
+			nameEmoji = stateEmojis.lock
+
+		name = `${nameEmoji} ${name}`
+		if (oldName != name)
+		{
+			await channel.edit({name})
+		}
+	} catch(e) {
+		console.error(e)
+		return false
+	}
+
+	return true
+}
+
 /* ========================================================================== */
 /*                                  COMMANDS                                  */
 /* ========================================================================== */
 const stateText = {
 	"hide": "скрыт",
 	"lock": "закрыт",
-	"unlock": "открыт"
+	"unlock": "открыт",
 }
 async function SetVoiceState(interaction, voiceChannel, newState)
 {
@@ -211,6 +255,7 @@ async function SetVoiceState(interaction, voiceChannel, newState)
 	await voiceChannel.permissionOverwrites.edit(guild.id, newPerms)
 	await UpdateMenu(false, voiceChannel)
 	await interaction.reply({ content: `Канал теперь ${stateText[ newState ]}.`, ephemeral: true })
+	// await VoiceEmojiName(voiceChannel)
 	VoiceLog(voiceChannel, 'Изменение канала', `Видимость канала: ${stateText[ newState ]}`)
 	return true
 }
@@ -318,6 +363,7 @@ module.exports = {
 	RandomOwner,
 	UpdateMenu,
 	VoiceLog,
+	VoiceEmojiName,
 
 	Commands: {
 		SetVoiceState,

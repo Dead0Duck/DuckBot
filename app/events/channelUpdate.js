@@ -13,6 +13,7 @@ module.exports = {
 		if (oldChannel.name != newChannel.name)
 		{
 			VoiceChannels.VoiceLog(newChannel, "Смена названия", `Старое название: ${oldChannel.name}`)
+			// VoiceChannels.VoiceEmojiName(newChannel)
 		}
 	}
 }

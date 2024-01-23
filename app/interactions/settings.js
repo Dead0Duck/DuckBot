@@ -19,17 +19,17 @@ module.exports = {
 				let component
 				switch (setting.type) {
 					case "bool":
-						component = setting.components(customId[2], guildId)
+						component = setting.components(customId[2], guildId, guildData.Settings[setting.field])
 						firstRow.addComponents(component)
 						await interaction.reply({ content: setting.description, components: [firstRow], ephemeral: true })
 						return
 					case "selectString":
-						component = setting.component(interaction, guildId).setCustomId(`${interId}:apply:${customId[2]}:${guildId}`)
+						component = setting.component(interaction, guildId, guildData.Settings[setting.field]).setCustomId(`${interId}:apply:${customId[2]}:${guildId}`)
 						firstRow.addComponents(component)
 						await interaction.reply({ content: setting.description, components: [firstRow], ephemeral: true })
 						return
 					case "textInput":
-						const modal = setting.modal(interaction, guildId).setCustomId(`${interId}:apply:${customId[2]}:${guildId}`)
+						const modal = setting.modal(interaction, guildId, guildData.Settings[setting.field]).setCustomId(`${interId}:apply:${customId[2]}:${guildId}`)
 						await interaction.showModal(modal)
 						return
 				}
