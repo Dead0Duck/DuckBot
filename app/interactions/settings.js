@@ -25,6 +25,9 @@ module.exports = {
 						return
 					case "selectString":
 						component = setting.component(interaction, guildId, guildData.Settings[setting.field]).setCustomId(`${interId}:apply:${customId[2]}:${guildId}`)
+						if (component.options.length < 1) {
+							return await interaction.reply({ content: setting.emptyText, ephemeral: true })
+						}
 						firstRow.addComponents(component)
 						await interaction.reply({ content: setting.description, components: [firstRow], ephemeral: true })
 						return

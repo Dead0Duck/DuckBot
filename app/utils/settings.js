@@ -62,11 +62,13 @@ class SelectStringSetting extends BaseSetting {
      * @param {string} description - Описание параметра.
      * @param {function (interaction, guildId): StringSelectMenuBuilder} component - Функция, возвращающая `StringSelectMenuBuilder`
      * @param {function (guildSettings): string} value - Функция, возвращающая string для отображения в embed.
+     * @param {string} emptyText - Текст для отображения, если список окажется пустым.
      * @param {function (interaction, guildId)} onSuccess - Функция, которая выполняется при успешном апдейте параметра.
      * @param {function (interaction, guildId)} onDelete - Функция, которая выполняется при успешном удалении параметра.
      */
-    constructor(label, field, description, component, value, onSuccess = () => { }, onDelete = () => { }) {
+    constructor(label, field, description, component, value, emptyText = "Ошибка: список пуст.", onSuccess = () => { }, onDelete = () => { }) {
         super(label, field, description, onSuccess, onDelete)
+        this.emptyText = emptyText
         this.component = component
         this.value = value
         this.type = 'selectString'
@@ -126,7 +128,9 @@ const Settings = [
         },
         (guildSettings) => {
             return `${typeof guildSettings.PartiesChannel === 'undefined' ? "не указан" : `<#${guildSettings.PartiesChannel}>`} `
-        }, (interaction, guildId) => {
+        },
+        "Форумов не найдено.",
+        (interaction, guildId) => {
             const partyFAQString = fs.readFileSync('bigstrings/partyfaq.md').toString('utf-8');
             interaction.client.channels.fetch(interaction.values[0]).then((channel) => {
                 channel.threads.create({
