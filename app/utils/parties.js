@@ -2,20 +2,27 @@ module.exports = {
     checkMany: async (client) => {
         const { GuildSchema } = process.mongo;
         const guildData = await GuildSchema.find({ PartiesThread: { $exists: true } })
+        const promises = []
 
         guildData.forEach(async (guildData) => {
-            client.guilds.fetch(guildData.Guild).then(
+            promises.push(client.guilds.fetch(guildData.Guild).then(
                 async (guild) => {
                     if (!(guild.channels.cache.find(channel => channel.id === guildData.PartiesThread))) {
-                        await GuildSchema.updateOne({ Guild: guild.id }, {
-                            $unset: {
-                                "PartiesThread": "",
-                                "Settings.PartiesChannel": ""
-                            }
-                        })
+                        return guild.id
                     }
                 }
-            )
+            ))
+        })
+        Promise.all(promises).then(async values => {
+            const filteredValues = values.filter(values => values !== undefined)
+            if (filteredValues.length > 0) {
+                await GuildSchema.updateMany({ Guild: { $in: filteredValues } }, {
+                    $unset: {
+                        "PartiesThread": "",
+                        "Settings.PartiesChannel": ""
+                    }
+                })
+            }
         })
     },
     checkOne: async (filter) => {
@@ -40,11 +47,19 @@ module.exports = {
     checkAllParties: async (client) => {
         const { PartySchema } = process.mongo
         const partiesData = await PartySchema.find({ ThreadId: { $exists: true } })
-        partiesData.forEach(async (partyData) => {
-            client.channels.fetch(partyData.ThreadId).catch(async (e) => {
+        const promises = []
+        partiesData.forEach((partyData) => {
+            promises.push(client.channels.fetch(partyData.ThreadId).then(() => { return }).catch((e) => {
                 if (e.code === 10003)
-                    await PartySchema.deleteOne({ ThreadId: partyData.ThreadId })
-            })
+                    return partyData.ThreadId
+            }))
         })
+        Promise.all(promises).then(async (values) => {
+            const filteredValues = values.filter(value => value !== undefined)
+            if (filteredValues.length > 0) {
+                await PartySchema.deleteMany({ ThreadId: { $in: filteredValues } })
+            }
+        }
+        )
     }
 }
