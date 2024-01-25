@@ -40,7 +40,7 @@ class BooleanSetting extends BaseSetting {
         this.falseLabel = falseLabel
         this.type = 'bool'
     }
-    components(index, guildId) {
+    components(index, guildId, data) {
         return [new ButtonBuilder().setLabel(this.trueLabel).setStyle(ButtonStyle.Success).setCustomId(`st:apply:${index}:true:${guildId}`),
         new ButtonBuilder().setLabel(this.falseLabel).setStyle(ButtonStyle.Danger).setCustomId(`st:apply:${index}:false:${guildId}`)]
     }
@@ -60,7 +60,7 @@ class SelectStringSetting extends BaseSetting {
      * @param {string} label - Название параметра.
      * @param {string} field - Название параметра в базе данных
      * @param {string} description - Описание параметра.
-     * @param {function (interaction, guildId): StringSelectMenuBuilder} component - Функция, возвращающая `StringSelectMenuBuilder`
+     * @param {function (interaction, guildId, data): StringSelectMenuBuilder} component - Функция, возвращающая `StringSelectMenuBuilder`
      * @param {function (guildSettings): string} value - Функция, возвращающая string для отображения в embed.
      * @param {string} emptyText - Текст для отображения, если список окажется пустым.
      * @param {function (interaction, guildId)} onSuccess - Функция, которая выполняется при успешном апдейте параметра.
@@ -86,7 +86,7 @@ class TextInputSetting extends BaseSetting {
      * 
      * @param {string} label - Название параметра.
      * @param {string} field - Название параметра в базе данных.
-     * @param {function (interaction, guildId)} modal - Функция, возвращающая `ModalBuilder`
+     * @param {function (interaction, guildId, data)} modal - Функция, возвращающая `ModalBuilder`
      * @param {function (guildSettings)} value - Функция, возвращающая string для отображения в embed.
      * @param {function (interaction)} validate - Функция, которая вызывается для проверки введённых данных. Если всё в порядке, то возвращает 0, а если нет, то должна вернуть string с описанием ошибки.
      * @param {function (interaction, guildId)} onSuccess - Функция, которая выполняется при успешном апдейте параметра.
