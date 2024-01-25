@@ -171,14 +171,9 @@ async function _settings(guild)
 		guildData.Settings = { Version: 1 }
 		await guildData.save()
 
-		const { embed, rows } = Settings.Components(guildData.Settings, guild)
-
 		let owner = await guild.fetchOwner()
 		owner.send({
-			// TODO: написать нормальное приветствие 
-			content: "Hello!",
-			embeds: [embed],
-			components: rows
+			content: "Добрый день! Спасибо, что используете DuckBot на своём сервере! Чтобы его настроить, воспльзуйтесь командой /settings"
 		})
 	} catch(e) {
 		console.error(e)
