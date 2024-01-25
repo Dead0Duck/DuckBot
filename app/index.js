@@ -5,11 +5,13 @@ const path = require('node:path');
 const { Client, Collection, Events, GatewayIntentBits } = require('discord.js');
 const token = process.env.TOKEN;
 
-const client = new Client({ intents: [
-	GatewayIntentBits.Guilds,
-	GatewayIntentBits.GuildMembers,
-	GatewayIntentBits.GuildVoiceStates,
-] });
+const client = new Client({
+	intents: [
+		GatewayIntentBits.Guilds,
+		GatewayIntentBits.GuildMembers,
+		GatewayIntentBits.GuildVoiceStates,
+	]
+});
 
 
 client.commands = new Collection();
@@ -19,6 +21,9 @@ for (const folder of commandFolders) {
 	const commandsPath = path.join(commandFoldersPath, folder);
 	const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
 	for (const file of commandFiles) {
+		if (file === 'eval.js' && (!process.env.DEV_ID)) {
+			continue
+		}
 		const filePath = path.join(commandsPath, file);
 		const command = require(filePath);
 		if ('data' in command && 'execute' in command) {
@@ -49,7 +54,7 @@ const interactionsFiles = fs.readdirSync(interactionsPath).filter(file => file.e
 for (const file of interactionsFiles) {
 	const filePath = path.join(interactionsPath, file);
 	const interaction = require(filePath);
-	
+
 	if ('id' in interaction && 'execute' in interaction) {
 		client.interactions.set(interaction.id, interaction)
 	} else {
