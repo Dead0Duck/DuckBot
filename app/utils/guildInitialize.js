@@ -68,17 +68,23 @@ async function VoiceChannel(guild)
 			}
 		}
 
-		voiceCat = voiceCat || await guild.channels.create({
-			name: 'DuckBot: Личные комнаты', type: ChannelType.GuildCategory, position: 2, deny: [{
-				id: guild.id,
+		let deny = [{
+			id: guild.id,
+			allow: [PermissionFlagsBits.ViewChannel],
+		}]
+		if (guildData.RegRole)
+		{
+			deny.push({
+				id: guildData.RegRole,
 				allow: [PermissionFlagsBits.ViewChannel],
-			}]
+			})
+		}
+
+		voiceCat = voiceCat || await guild.channels.create({
+			name: 'DuckBot: Личные комнаты', type: ChannelType.GuildCategory, position: 2, deny
 		})
 		voiceTexCat = voiceTexCat || await guild.channels.create({
-			name: 'DuckBot: Меню личных комнат', type: ChannelType.GuildCategory, position: 1, deny: [{
-				id: guild.id,
-				allow: [PermissionFlagsBits.ViewChannel],
-			}]
+			name: 'DuckBot: Меню личных комнат', type: ChannelType.GuildCategory, position: 1, deny
 		})
 		voiceCreateChn = voiceCreateChn || await guild.channels.create({ name: 'Создать комнату', parent: voiceCat, type: ChannelType.GuildVoice, position: 1 })
 		voiceCreateCloseChn = voiceCreateCloseChn || await guild.channels.create({ name: 'Создать скрытую комнату', parent: voiceCat, type: ChannelType.GuildVoice, position: 2 })

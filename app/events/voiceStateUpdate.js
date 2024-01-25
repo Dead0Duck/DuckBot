@@ -21,14 +21,13 @@ async function CreateVoice(oldState, newState, guildData)
 	]
 
 	let isClosed = (newChannel == guildData.VoiceCreateClosed)
-	if (isClosed)
-		denyPerms.push(PermissionFlagsBits.ViewChannel)
 
 	try {
-		let voiceChannel = await guild.channels.create({ name: `Комната ${member.displayName || "???"}`, parent: guildData.VoiceCategory, type: ChannelType.GuildVoice, permissionOverwrites: [
+		let permissionOverwrites = [
 			{
-				id: guild.roles.everyone,
-				deny: denyPerms
+				id: guild.id,
+				deny: denyPerms,
+				allow: [PermissionFlagsBits.Connect]
 			},
 			{
 				id: member.id,
@@ -36,15 +35,34 @@ async function CreateVoice(oldState, newState, guildData)
 					PermissionFlagsBits.ManageChannels,
 					PermissionFlagsBits.MoveMembers,
 					PermissionFlagsBits.ViewChannel,
-					PermissionFlagsBits.Connect
+					PermissionFlagsBits.Connect,
 				],
 			}
-		]})
+		]
+		if (guildData.Settings.RegRole)
+		{
+			permissionOverwrites[0].deny.push(PermissionFlagsBits.ViewChannel)
+			let id = permissionOverwrites.push({
+				id: guildData.Settings.RegRole,
+				allow: [
+					PermissionFlagsBits.Connect
+				]
+			})
+			if(isClosed)
+				permissionOverwrites[id - 1].deny = [PermissionFlagsBits.ViewChannel]
+			else
+				permissionOverwrites[id - 1].allow.push(PermissionFlagsBits.ViewChannel)
+		}
+		else if(isClosed)
+		{
+			permissionOverwrites[0].deny.push(PermissionFlagsBits.ViewChannel)
+		}
+		let voiceChannel = await guild.channels.create({ name: `Комната ${member.displayName || "???"}`, parent: guildData.VoiceCategory, type: ChannelType.GuildVoice, permissionOverwrites})
 		// await VoiceChannels.VoiceEmojiName(voiceChannel)
 
 		let textChannel = await guild.channels.create({ name: 'меню комнаты', parent: guildData.VoiceTextCategory, type: ChannelType.GuildText, permissionOverwrites: [
 			{
-				id: guild.roles.everyone,
+				id: guild.id,
 				deny: [
 					PermissionFlagsBits.ViewChannel,
 					PermissionFlagsBits.SendMessages,

@@ -51,12 +51,17 @@ async function UpdateMenu(channel, voiceChannel)
 	let menu = await channel.messages.fetch({ limit: 1 })
 	menu = menu.first()
 
+	const { GuildSchema } = process.mongo;
+	let guildData = await GuildSchema.findOne({ Guild: guild.id })
+	if (!guildData) return false
+
 	const embed = menu.embeds[0];
 	const creatorId = embed.description.match(/Создатель: <@([0-9]+)*?>+/i)
 	const ownerId = GetOwner(voiceChannel)
 
 	const voicePerms = voiceChannel.permissionOverwrites.cache
-	const everyonePerms = voicePerms.find(p => p.id == guild.id)
+	const everyoneId = guildData.Settings.RegRole || guild.id
+	const everyonePerms = voicePerms.find(p => p.id == everyoneId)
 
 	const isHidden = everyonePerms?.deny.has(PermissionFlagsBits.ViewChannel)
 	const isClosed = everyonePerms?.deny.has(PermissionFlagsBits.Connect)
@@ -238,8 +243,8 @@ async function SetVoiceState(interaction, voiceChannel, newState)
 {
 	let guild = voiceChannel.guild
 	let newPerms = {
-		ViewChannel: null,
-		Connect: null,
+		ViewChannel: true,
+		Connect: true,
 	}
 
 	switch(newState)
@@ -252,7 +257,12 @@ async function SetVoiceState(interaction, voiceChannel, newState)
 			break;
 	}
 
-	await voiceChannel.permissionOverwrites.edit(guild.id, newPerms)
+	const { GuildSchema } = process.mongo;
+	let guildData = await GuildSchema.findOne({ Guild: guild.id })
+	if (!guildData) return false
+	const everyoneId = guildData.Settings.RegRole || guild.id
+
+	await voiceChannel.permissionOverwrites.edit(everyoneId, newPerms)
 	await UpdateMenu(false, voiceChannel)
 	await interaction.reply({ content: `Канал теперь ${stateText[ newState ]}.`, ephemeral: true })
 	// await VoiceEmojiName(voiceChannel)

@@ -240,43 +240,6 @@ const Settings = [
 				roleSelect.setMaxValues(1)
 				
 			return roleSelect
-			/*let roles = interaction.client.guilds.resolve(guildId).roles.cache
-			if (roles)
-				roles = Array.from(roles.values())
-
-			let roleSelects = []
-			for(let i = 0; i < Math.ceil(roles.length/25); i++)
-			{
-				const roleSelect = new StringSelectMenuBuilder()
-					.setMaxValues(1)
-
-				let maxJ = Math.min((i + 1) * 25, roles.length)
-				for(let j = i * 25; j < maxJ; j++)
-				{
-					let role = roles[j]
-					roleSelect.addOptions(
-						new StringSelectMenuOptionBuilder()
-							.setLabel(role.name)
-							.setValue(role.id)
-							// .setDescription(channel.parent == null ? "Не в категории" : `В категории "${channel.parent.name}"`)
-					)
-				}
-
-				roleSelects[i] = roleSelect
-			}
-			console.log(roleSelects)
-
-            /* const roleSelect = new StringSelectMenuBuilder()
-                .setMaxValues(1)
-				roles.map((role) => {
-                roleSelect.addOptions(
-						new StringSelectMenuOptionBuilder()
-							.setLabel(role.name)
-							.setValue(role.id)
-							// .setDescription(channel.parent == null ? "Не в категории" : `В категории "${channel.parent.name}"`)
-					)
-				}) */
-            // return roleSelects */
         },
         (guildSettings) => {
             return `${typeof guildSettings.RegRole === 'undefined' ? "не указана" : `<@&${guildSettings.RegRole}>`} `
