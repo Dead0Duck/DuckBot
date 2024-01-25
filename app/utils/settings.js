@@ -1,4 +1,4 @@
-const { ChannelFlagsBitField, ButtonBuilder, ButtonStyle, ActionRowBuilder, EmbedBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, TextInputBuilder, ModalBuilder, TextInputStyle, ChannelType } = require('discord.js');
+const { ChannelFlagsBitField, ButtonBuilder, ButtonStyle, ActionRowBuilder, EmbedBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, TextInputBuilder, ModalBuilder, TextInputStyle, ChannelType, RoleSelectMenuBuilder } = require('discord.js');
 const fs = require('fs');
 
 class BaseSetting {
@@ -17,6 +17,7 @@ class BaseSetting {
         this.onDelete = onDelete
     }
 }
+
 /**
  * Параметр, который принимает лишь значения boolean.
  */
@@ -51,6 +52,7 @@ class BooleanSetting extends BaseSetting {
         return 0
     }
 }
+
 /**
  * Параметр, который принимает один или несколько string из списка.
  * @extends BaseSetting
@@ -72,6 +74,33 @@ class SelectStringSetting extends BaseSetting {
         this.component = component
         this.value = value
         this.type = 'selectString'
+    }
+    validate() {
+        return 0
+    }
+}
+
+/**
+ * Параметр, который принимает один или несколько string из списка.
+ * @extends BaseSetting
+ */
+class SelectRoleSetting extends BaseSetting {
+    /**
+     * @param {string} label - Название параметра.
+     * @param {string} field - Название параметра в базе данных
+     * @param {string} description - Описание параметра.
+     * @param {function (interaction, guildId, data): StringSelectMenuBuilder} component - Функция, возвращающая `StringSelectMenuBuilder`
+     * @param {function (guildSettings): string} value - Функция, возвращающая string для отображения в embed.
+     * @param {string} emptyText - Текст для отображения, если список окажется пустым.
+     * @param {function (interaction, guildId)} onSuccess - Функция, которая выполняется при успешном апдейте параметра.
+     * @param {function (interaction, guildId)} onDelete - Функция, которая выполняется при успешном удалении параметра.
+     */
+    constructor(label, field, description, component, value, emptyText = "Ошибка: список пуст.", onSuccess = () => { }, onDelete = () => { }) {
+        super(label, field, description, onSuccess, onDelete)
+        this.emptyText = emptyText
+        this.component = component
+        this.value = value
+        this.type = 'selectRole'
     }
     validate() {
         return 0
@@ -203,7 +232,72 @@ const Settings = [
         (guildSettings) => {
             return `${typeof guildSettings.VoiceLogs === 'undefined' ? "не указан" : `<#${guildSettings.VoiceLogs}>`} `
         }
-    )
+    ),
+
+	new SelectRoleSetting("Роль регистрации", "RegRole", "Выбор роли, которую бот выдаст при регистрации",
+        (interaction, guildId) => {
+			const roleSelect = new RoleSelectMenuBuilder()
+				roleSelect.setMaxValues(1)
+				
+			return roleSelect
+			/*let roles = interaction.client.guilds.resolve(guildId).roles.cache
+			if (roles)
+				roles = Array.from(roles.values())
+
+			let roleSelects = []
+			for(let i = 0; i < Math.ceil(roles.length/25); i++)
+			{
+				const roleSelect = new StringSelectMenuBuilder()
+					.setMaxValues(1)
+
+				let maxJ = Math.min((i + 1) * 25, roles.length)
+				for(let j = i * 25; j < maxJ; j++)
+				{
+					let role = roles[j]
+					roleSelect.addOptions(
+						new StringSelectMenuOptionBuilder()
+							.setLabel(role.name)
+							.setValue(role.id)
+							// .setDescription(channel.parent == null ? "Не в категории" : `В категории "${channel.parent.name}"`)
+					)
+				}
+
+				roleSelects[i] = roleSelect
+			}
+			console.log(roleSelects)
+
+            /* const roleSelect = new StringSelectMenuBuilder()
+                .setMaxValues(1)
+				roles.map((role) => {
+                roleSelect.addOptions(
+						new StringSelectMenuOptionBuilder()
+							.setLabel(role.name)
+							.setValue(role.id)
+							// .setDescription(channel.parent == null ? "Не в категории" : `В категории "${channel.parent.name}"`)
+					)
+				}) */
+            // return roleSelects */
+        },
+        (guildSettings) => {
+            return `${typeof guildSettings.RegRole === 'undefined' ? "не указана" : `<@&${guildSettings.RegRole}>`} `
+        }
+    ),
+
+	/* new TextInputSetting("Текст для регистранта", "RegText", (interaction, guildId, data) => {
+        return new ModalBuilder({
+            title: "Введите текст при регистрации", components: [
+                new ActionRowBuilder().addComponents(new TextInputBuilder()
+					.setCustomId('regtext')
+					.setLabel('Текст')
+					.setStyle(TextInputStyle.Paragraph)
+					.setMaxLength(1900)
+					.setValue(data || "")
+					.setPlaceholder())
+            ]
+        })
+    }, (guildSettings) => {
+        return `${typeof guildSettings.RegText === 'undefined' ? "не указан" : "указан"} `
+    }) */
 ]
 
 const chunk = (arr, size) =>
