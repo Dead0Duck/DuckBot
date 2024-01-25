@@ -1,4 +1,4 @@
-const { ChannelFlagsBitField, ButtonBuilder, ButtonStyle, ActionRowBuilder, EmbedBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, TextInputBuilder, ModalBuilder, TextInputStyle, ChannelType, RoleSelectMenuBuilder } = require('discord.js');
+const { ChannelFlagsBitField, ButtonBuilder, ButtonStyle, ActionRowBuilder, EmbedBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, TextInputBuilder, ModalBuilder, TextInputStyle, ChannelType, RoleSelectMenuBuilder, UserSelectMenuBuilder } = require('discord.js');
 const fs = require('fs');
 
 class BaseSetting {
@@ -55,7 +55,6 @@ class BooleanSetting extends BaseSetting {
 
 /**
  * Параметр, который принимает один или несколько string из списка.
- * @extends BaseSetting
  */
 class SelectStringSetting extends BaseSetting {
     /**
@@ -81,26 +80,23 @@ class SelectStringSetting extends BaseSetting {
 }
 
 /**
- * Параметр, который принимает один или несколько string из списка.
- * @extends BaseSetting
+ * Параметр, который принимает что-то из [предзаполненного](https://discordjs.guide/message-components/select-menus.html#auto-populating-select-menus) списка.
  */
-class SelectRoleSetting extends BaseSetting {
+class SelectAutoSetting extends BaseSetting {
     /**
      * @param {string} label - Название параметра.
      * @param {string} field - Название параметра в базе данных
      * @param {string} description - Описание параметра.
-     * @param {function (interaction, guildId, data): StringSelectMenuBuilder} component - Функция, возвращающая `StringSelectMenuBuilder`
+     * @param {function (interaction, guildId, data): UserSelectMenuBuilder | RoleSelectMenuBuilder | MentionableSelectMenuBuilder | ChannelSelectMenuBuilder} component - Функция, возвращающая `{User|Role|Mentionable|Channel}SelectMenuBuilder`
      * @param {function (guildSettings): string} value - Функция, возвращающая string для отображения в embed.
-     * @param {string} emptyText - Текст для отображения, если список окажется пустым.
      * @param {function (interaction, guildId)} onSuccess - Функция, которая выполняется при успешном апдейте параметра.
      * @param {function (interaction, guildId)} onDelete - Функция, которая выполняется при успешном удалении параметра.
      */
-    constructor(label, field, description, component, value, emptyText = "Ошибка: список пуст.", onSuccess = () => { }, onDelete = () => { }) {
+    constructor(label, field, description, component, value, onSuccess = () => { }, onDelete = () => { }) {
         super(label, field, description, onSuccess, onDelete)
-        this.emptyText = emptyText
         this.component = component
         this.value = value
-        this.type = 'selectRole'
+        this.type = 'selectAuto'
     }
     validate() {
         return 0
@@ -234,28 +230,28 @@ const Settings = [
         }
     ),
 
-	new SelectRoleSetting("Роль регистрации", "RegRole", "Выбор роли, которую бот выдаст при регистрации",
+    new SelectAutoSetting("Роль регистрации", "RegRole", "Выбор роли, которую бот выдаст при регистрации",
         (interaction, guildId) => {
-			const roleSelect = new RoleSelectMenuBuilder()
-				roleSelect.setMaxValues(1)
-				
-			return roleSelect
+            const roleSelect = new RoleSelectMenuBuilder()
+            roleSelect.setMaxValues(1)
+
+            return roleSelect
         },
         (guildSettings) => {
             return `${typeof guildSettings.RegRole === 'undefined' ? "не указана" : `<@&${guildSettings.RegRole}>`} `
         }
     ),
 
-	/* new TextInputSetting("Текст для регистранта", "RegText", (interaction, guildId, data) => {
+    /* new TextInputSetting("Текст для регистранта", "RegText", (interaction, guildId, data) => {
         return new ModalBuilder({
             title: "Введите текст при регистрации", components: [
                 new ActionRowBuilder().addComponents(new TextInputBuilder()
-					.setCustomId('regtext')
-					.setLabel('Текст')
-					.setStyle(TextInputStyle.Paragraph)
-					.setMaxLength(1900)
-					.setValue(data || "")
-					.setPlaceholder())
+                    .setCustomId('regtext')
+                    .setLabel('Текст')
+                    .setStyle(TextInputStyle.Paragraph)
+                    .setMaxLength(1900)
+                    .setValue(data || "")
+                    .setPlaceholder())
             ]
         })
     }, (guildSettings) => {

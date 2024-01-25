@@ -23,7 +23,7 @@ module.exports = {
 						firstRow.addComponents(component)
 						await interaction.reply({ content: setting.description, components: [firstRow], ephemeral: true })
 						return
-					case "selectRole":
+					case "selectAuto":
 					case "selectString":
 						component = setting.component(interaction, guildId, guildData.Settings[setting.field]).setCustomId(`${interId}:apply:${customId[2]}:${guildId}`)
 						if (setting.type == "selectString" && component.options.length < 1) {
@@ -52,7 +52,7 @@ module.exports = {
 						}
 						await interaction.reply({ content: content, ephemeral: true, components: [] })
 						return
-					case "selectRole":
+					case "selectAuto":
 					case "selectString":
 						await GuildSchema.updateOne({ Guild: guildId }, { $set: { [`Settings.${setting.field}`]: interaction.values.length > 1 ? interaction.values : interaction.values[0] } })
 						await interaction.update({ content: "Параметр установлен", ephemeral: true, components: [] })
