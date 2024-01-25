@@ -1,4 +1,4 @@
-const { ChannelFlagsBitField, ButtonBuilder, ButtonStyle, ActionRowBuilder, EmbedBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, TextInputBuilder, ModalBuilder, TextInputStyle, ChannelType, RoleSelectMenuBuilder, UserSelectMenuBuilder } = require('discord.js');
+const { ChannelFlagsBitField, ButtonBuilder, ButtonStyle, ActionRowBuilder, EmbedBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, TextInputBuilder, ModalBuilder, TextInputStyle, ChannelType, RoleSelectMenuBuilder, UserSelectMenuBuilder, ChannelSelectMenuBuilder } = require('discord.js');
 const fs = require('fs');
 
 class BaseSetting {
@@ -137,24 +137,16 @@ class TextInputSetting extends BaseSetting {
 }
 
 const Settings = [
-    new SelectStringSetting("Форум для поиска компаний", "PartiesChannel", "Выбор форума для поиска совместных активностей",
+    new SelectAutoSetting("Форум для поиска компаний", "PartiesChannel", "Выбор форума для поиска совместных активностей",
         (interaction, guildId) => {
-            const channelSelect = new StringSelectMenuBuilder()
+            const channelSelect = new ChannelSelectMenuBuilder()
                 .setMaxValues(1)
-            interaction.client.guilds.resolve(guildId).channels.cache.filter(x => x.isThreadOnly()).map((channel) => {
-                channelSelect.addOptions(
-                    new StringSelectMenuOptionBuilder()
-                        .setLabel(channel.name)
-                        .setValue(channel.id)
-                        .setDescription(channel.parent == null ? "Не в категории" : `В категории "${channel.parent.name}"`)
-                )
-            })
+                .setChannelTypes(ChannelType.GuildForum)
             return channelSelect
         },
         (guildSettings) => {
             return `${typeof guildSettings.PartiesChannel === 'undefined' ? "не указан" : `<#${guildSettings.PartiesChannel}>`} `
         },
-        "Форумов не найдено.",
         (interaction, guildId) => {
             const partyFAQString = fs.readFileSync('bigstrings/partyfaq.md').toString('utf-8');
             interaction.client.channels.fetch(interaction.values[0]).then((channel) => {
