@@ -103,9 +103,9 @@ function messageParty(values, stringInvites, partNum, userId, date) {
     return `* \`👑 Организатор:\` <@${userId}>\n` +
         (`* \`👥 Количество участников:\` ${partNum ? partNum : `без ограничений`}\n`) +
         `* \`🕐 Дата и время сбора:\` <t:${date.unix()}>\n` +
-        (values.requirement.length > 0 ? `* \`⚠️ Требования:\` ${values.requirement}\n` : '') +
+        (values.requirement.length > 0 ? `* \`⚠️ Требования:\` ${escapeFormat(values.requirement)}\n` : '') +
         (stringInvites.length > 0 ? `* \`✉️ Приглашаю:\` ${stringInvites}\n` : '') +
-        (values.tip.length > 0 ? `* \`📝 Примечание:\` ${values.tip}` : '')
+        (values.tip.length > 0 ? `* \`📝 Примечание:\` ${escapeFormat(values.tip)}` : '')
 }
 
 /**
@@ -136,6 +136,22 @@ function mentionsGen(users, roles, excludeId) {
         })
     }
     return { stringInvites, userMentions, roleMentions }
+}
+
+const replacements = [
+    [/\*/g, '\\*', 'asterisks'],
+    [/_/g, '\\_', 'underscores'],
+    [/`/g, '\\`', 'codeblocks'],
+    [/\n/g, ` `, 'line-breaks']
+]
+
+function escapeFormat(string, skips = []) {
+    return replacements.reduce(function (string, replacement) {
+        var name = replacement[2]
+        return name && skips.indexOf(name) !== -1
+            ? string
+            : string.replace(replacement[0], replacement[1])
+    }, string)
 }
 
 module.exports = {
@@ -200,8 +216,8 @@ module.exports = {
                         fields: [{ name: "Название активности", value: values.activityName },
                         { name: "Количество участников", value: partNum < 1 ? "_без ограничений_" : partNum },
                         { name: "Дата и время сбора", value: `<t:${date.unix()}>` },
-                        { name: "Требования", value: values.requirement.length < 1 ? '_не указано_' : values.requirement },
-                        { name: "Примечание", value: values.tip.length < 1 ? '_не указано_' : values.tip }]
+                        { name: "Требования", value: values.requirement.length < 1 ? '_не указано_' : escapeFormat(values.requirement) },
+                        { name: "Примечание", value: values.tip.length < 1 ? '_не указано_' : escapeFormat(values.tip) }]
                     })], components: [
                         new ActionRowBuilder({
                             components: [new ButtonBuilder({ label: "Подтвердить", custom_id: `${interId}:accept`, style: ButtonStyle.Success }),
