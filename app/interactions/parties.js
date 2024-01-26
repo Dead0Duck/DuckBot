@@ -272,7 +272,7 @@ module.exports = {
                             const { stringInvites, userMentions, roleMentions } = mentionsGen(inviteConfirmation.users, inviteConfirmation.roles, inviteConfirmation.user.id)
 
                             await webhookClient.send({
-                                threadName: values.activityName, username: inviteConfirmation.user.username,
+                                threadName: values.activityName, username: inviteConfirmation.member.nickname ? `${inviteConfirmation.member.nickname} (${inviteConfirmation.user.username})` : `${inviteConfirmation.user.username}`,
                                 avatarURL: inviteConfirmation.user.avatarURL(),
                                 content: messageParty(values, stringInvites, partNum, inviteConfirmation.user.id, date),
                                 components: [new ActionRowBuilder({
