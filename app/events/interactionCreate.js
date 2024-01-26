@@ -1,11 +1,14 @@
 const { Events } = require('discord.js');
 
-async function sendMessage(text, interaction)
-{
-	if (interaction.replied || interaction.deferred) {
-		await interaction.followUp({ content: text, ephemeral: true });
-	} else {
-		await interaction.reply({ content: text, ephemeral: true });
+async function sendMessage(text, interaction) {
+	try {
+		if (interaction.replied || interaction.deferred) {
+			await interaction.followUp({ content: text, ephemeral: true });
+		} else {
+			await interaction.reply({ content: text, ephemeral: true });
+		}
+	} catch (e) {
+		console.error(e)
 	}
 }
 
@@ -22,8 +25,7 @@ module.exports = {
 				return;
 			}
 		}
-		else
-		{
+		else {
 			let id = interaction.customId.split(":")
 			command = interaction.client.interactions.get(id[0]);
 			if (!command) {
