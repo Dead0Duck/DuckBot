@@ -203,18 +203,11 @@ const Settings = [
         }
     ),
 
-    new SelectStringSetting("Канал для логов личных комнат", "VoiceLogs", "Выбор канала для логов действий в личных комнат",
+    new SelectAutoSetting("Канал для логов личных комнат", "VoiceLogs", "Выбор канала для логов действий в личных комнат",
         (interaction, guildId) => {
-            const channelSelect = new StringSelectMenuBuilder()
+            const channelSelect = new ChannelSelectMenuBuilder()
                 .setMaxValues(1)
-            interaction.client.guilds.resolve(guildId).channels.cache.filter(x => x.type == ChannelType.GuildText).map((channel) => {
-                channelSelect.addOptions(
-                    new StringSelectMenuOptionBuilder()
-                        .setLabel(channel.name)
-                        .setValue(channel.id)
-                        .setDescription(channel.parent == null ? "Не в категории" : `В категории "${channel.parent.name}"`)
-                )
-            })
+				.setChannelTypes(ChannelType.GuildText)
             return channelSelect
         },
         (guildSettings) => {
