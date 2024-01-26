@@ -17,11 +17,13 @@ module.exports = (clientId) => {
 		const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
 		// Grab the SlashCommandBuilder#toJSON() output of each command's data for deployment
 		for (const file of commandFiles) {
+			if (file === 'eval.js' && (!process.env.DEV_ID)) {
+				continue
+			}
 			const filePath = path.join(commandsPath, file);
 			const command = require(filePath);
 			if ('data' in command && 'execute' in command) {
-				if (command.exclusive)
-				{
+				if (command.exclusive) {
 					commandsExclusive[command.exclusive] = commandsExclusive[command.exclusive] || []
 					commandsExclusive[command.exclusive].push(command.data.toJSON());
 				}
@@ -47,8 +49,7 @@ module.exports = (clientId) => {
 			)
 
 			try {
-				if (Object.keys(commandsExclusive).length > 0)
-				{
+				if (Object.keys(commandsExclusive).length > 0) {
 					for (const [key, value] of Object.entries(commandsExclusive)) {
 						const guildData = await rest.put(
 							Routes.applicationGuildCommands(clientId, key),
@@ -58,7 +59,7 @@ module.exports = (clientId) => {
 						console.log(`Successfully reloaded ${guildData.length} application (/) exclusive commands for guild ${key}.`);
 					};
 				}
-			} catch(e) {}
+			} catch (e) { }
 
 			// The put method is used to fully refresh all commands in the guild with the current set
 			const data = guildId ? await rest.put(
