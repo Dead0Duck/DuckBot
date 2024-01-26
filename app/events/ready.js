@@ -1,5 +1,6 @@
-const { Events } = require('discord.js');
+const { Events, ActivityType } = require('discord.js');
 const { GuildInitialize, Parties } = require('../utils')
+const { version } = require('../package.json');
 
 module.exports = {
 	name: Events.ClientReady,
@@ -9,6 +10,10 @@ module.exports = {
 
 		process.disClient = client
 		process.mongo = require('../mongodb')
+
+		client.user.setPresence({
+			activities: [{ name: `v${version}`, type: ActivityType.Custom }],
+		});
 
 		await Parties.checkMany(client)
 		await Parties.checkAllParties(client)
