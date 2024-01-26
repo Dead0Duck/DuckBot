@@ -10,6 +10,7 @@ const units = new Map()
 units.set(['s', 'с'], 1000)
 units.set(['m', 'м'], 60_000)
 units.set(['h', 'ч'], 3_600_000)
+units.set(['d', 'д'], 86_400_000)
 units.set(['w', 'н'], 604_800_000)
 units.set(['y', 'г'], 31_556_952_000)
 

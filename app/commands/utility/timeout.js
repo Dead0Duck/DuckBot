@@ -10,19 +10,19 @@ module.exports = {
         .addUserOption(option =>
             option
                 .setName("user")
-                .setDescription("Пользователь, которого нужно наказать")
+                .setDescription("Пользователь, которого нужно наказать.")
                 .setRequired(true)
         )
         .addStringOption(option =>
             option
                 .setName("duration")
-                .setDescription("Продолжительность мута в формате [число][первая буква единицы времени]")
+                .setDescription("Продолжительность мута в формате [число][первая буква единицы времени].")
                 .setRequired(true)
         )
         .addStringOption(option =>
             option
                 .setName("reason")
-                .setDescription("Причина мута")
+                .setDescription("Причина мута.")
                 .setRequired(true)
         )
         .addStringOption(option =>
