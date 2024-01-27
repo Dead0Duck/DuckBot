@@ -6,8 +6,7 @@ const VoiceChannels = require('./voiceChannels');
  * Создать личные комнаты, если их нет
  * @param {Guild} guild
  */
-async function VoiceChannel(guild)
-{
+async function VoiceChannel(guild) {
 	const { GuildSchema } = process.mongo
 
 	try {
@@ -17,14 +16,13 @@ async function VoiceChannel(guild)
 		let voiceCreateCloseChn = null
 
 		const guildData = await GuildSchema.findOne({ Guild: guild.id })
-		if (guildData)
-		{
+		if (guildData) {
 			try {
 				if (!guildData.VoiceCategory)
 					throw "No Data";
 
 				voiceCat = await guild.channels.fetch(guildData.VoiceCategory)
-			} catch(e) {
+			} catch (e) {
 				voiceCat = null
 			}
 
@@ -33,7 +31,7 @@ async function VoiceChannel(guild)
 					throw "No Data";
 
 				voiceTexCat = await guild.channels.fetch(guildData.VoiceTextCategory)
-			} catch(e) {
+			} catch (e) {
 				voiceTexCat = null
 			}
 
@@ -43,12 +41,11 @@ async function VoiceChannel(guild)
 
 				voiceCreateChn = await guild.channels.fetch(guildData.VoiceCreate)
 
-				if(!voiceCat || voiceCreateChn.parentId != voiceCat.id)
-				{
+				if (!voiceCat || voiceCreateChn.parentId != voiceCat.id) {
 					voiceCreateChn?.delete()
 					voiceCreateChn = null
 				}
-			} catch(e) {
+			} catch (e) {
 				voiceCreateChn = null
 			}
 
@@ -58,12 +55,11 @@ async function VoiceChannel(guild)
 
 				voiceCreateCloseChn = await guild.channels.fetch(guildData.VoiceCreateClosed)
 
-				if(!voiceCat || voiceCreateCloseChn.parentId != voiceCat.id)
-				{
+				if (!voiceCat || voiceCreateCloseChn.parentId != voiceCat.id) {
 					voiceCreateCloseChn?.delete()
 					voiceCreateCloseChn = null
 				}
-			} catch(e) {
+			} catch (e) {
 				voiceCreateCloseChn = null
 			}
 		}
@@ -72,8 +68,7 @@ async function VoiceChannel(guild)
 			id: guild.id,
 			allow: [PermissionFlagsBits.ViewChannel],
 		}]
-		if (guildData.RegRole)
-		{
+		if (guildData.RegRole) {
 			deny.push({
 				id: guildData.RegRole,
 				allow: [PermissionFlagsBits.ViewChannel],
@@ -93,7 +88,7 @@ async function VoiceChannel(guild)
 		guildData.VoiceTextCategory = voiceTexCat.id
 		guildData.VoiceCreate = voiceCreateChn.id
 		guildData.VoiceCreateClosed = voiceCreateCloseChn.id
-		
+
 		await guildData.save()
 
 		// let owner = await guild.fetchOwner()
@@ -110,8 +105,7 @@ async function VoiceChannel(guild)
  * Удалить личные комнаты, если в них нет пользователей
  * @param {Guild} guild 
  */
-async function VoiceChannelsFix(guild)
-{
+async function VoiceChannelsFix(guild) {
 	const { GuildSchema } = process.mongo;
 
 	try {
@@ -129,9 +123,8 @@ async function VoiceChannelsFix(guild)
 			if (channel.id == guildData.VoiceCreate || channel.id == guildData.VoiceCreateClosed)
 				return;
 
-			if (channel.members.size == 0)
-			{
-				VoiceChannels.VoiceLog(channel, 'Удаление канала')
+			if (channel.members.size == 0) {
+				VoiceChannels.VoiceLog(channel, 'Удаление канала', '', { iconURL: `https://i.imgur.com/Nk7j0Si.png`, color: `#DE0000` })
 				channel.delete('Участников не осталось')
 				return
 			}
@@ -147,7 +140,7 @@ async function VoiceChannelsFix(guild)
 			if (!voiceCat.children.cache.has(channel.topic))
 				channel.delete('Привязанного канала нет')
 		})
-	} catch(e) {
+	} catch (e) {
 		console.error(e)
 		return false
 	}
@@ -159,8 +152,7 @@ async function VoiceChannelsFix(guild)
  * Создать в бд запись для настроек и отправить их владельцу, если записи не было
  * @param {Guild} guild
  */
-async function _settings(guild)
-{
+async function _settings(guild) {
 	const { GuildSchema } = process.mongo;
 
 	try {
@@ -175,7 +167,7 @@ async function _settings(guild)
 		owner.send({
 			content: "Добрый день! Спасибо, что используете DuckBot на своём сервере! Чтобы его настроить, воспльзуйтесь командой /settings"
 		})
-	} catch(e) {
+	} catch (e) {
 		console.error(e)
 	}
 
@@ -194,8 +186,7 @@ module.exports = {
 
 		try {
 			const guildData = await GuildSchema.findOne({ Guild: guild.id })
-			if (!guildData)
-			{
+			if (!guildData) {
 				await GuildSchema.create({
 					Guild: guild.id,
 					DataVersion: 1,
