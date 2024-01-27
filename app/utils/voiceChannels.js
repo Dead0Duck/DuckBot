@@ -169,22 +169,30 @@ async function RandomOwner(channel, textChannel, channelMembers, guildData)
 let logChannel
 async function VoiceLog(channel, title, desc = '')
 {
-	const { GuildSchema } = process.mongo;
-	const guildData = await GuildSchema.findOne({ Guild: channel.guild.id })
-	if (!guildData || !guildData.Settings.VoiceLogs) return false
-	
-	if (!logChannel || logChannel?.id != guildData.Settings.VoiceLogs)
+	if (!channel)
+		return;
+
+	try
 	{
-		logChannel = await channel.guild.channels.fetch(guildData.Settings.VoiceLogs)
+		const { GuildSchema } = process.mongo;
+		const guildData = await GuildSchema.findOne({ Guild: channel.guild.id })
+		if (!guildData || !guildData.Settings.VoiceLogs) return false
+		
+		if (!logChannel || logChannel?.id != guildData.Settings.VoiceLogs)
+		{
+			logChannel = await channel.guild.channels.fetch(guildData.Settings.VoiceLogs)
+		}
+
+		const embed = new EmbedBuilder()
+			.setColor(0xFF0000)
+			.setTitle(title)
+			.setDescription(`Канал: ${channel.name} (<#${channel.id}>)\nID Канала: ${channel.id}\n${desc}`)
+			.setTimestamp(Date.now())
+
+		await logChannel.send({embeds: [embed], allowedMentions: { repliedUser: false }})
+	} catch(e) {
+		console.error(e)
 	}
-
-	const embed = new EmbedBuilder()
-		.setColor(0xFF0000)
-		.setTitle(title)
-		.setDescription(`Канал: ${channel.name} (<#${channel.id}>)\nID Канала: ${channel.id}\n${desc}`)
-		.setTimestamp(Date.now())
-
-	await logChannel.send({embeds: [embed], allowedMentions: { repliedUser: false }})
 }
 
 const emojiRegex = /([\uE000-\uF8FF]|\uD83C[\uDF00-\uDFFF]|\uD83D[\uDC00-\uDDFF])/g;

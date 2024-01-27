@@ -150,6 +150,8 @@ const Settings = [
         (interaction, guildId) => {
             const partyFAQString = fs.readFileSync('bigstrings/partyfaq.md').toString('utf-8');
             interaction.client.channels.fetch(interaction.values[0]).then((channel) => {
+                if (channel.flags.has(ChannelFlagsBitField.Flags.RequireTag))
+                    return interaction.followUp({ content: 'Главная ветка не была создана из-за необходимости тега для публикации. Уберите в настройках форума это требование и переназначьте снова.', ephemeral: true })
                 channel.threads.create({
                     name: "Хочешь найти компанию? Кликни на меня!", message: {
                         content: partyFAQString, components: [
@@ -207,7 +209,7 @@ const Settings = [
         (interaction, guildId) => {
             const channelSelect = new ChannelSelectMenuBuilder()
                 .setMaxValues(1)
-				.setChannelTypes(ChannelType.GuildText)
+                .setChannelTypes(ChannelType.GuildText)
             return channelSelect
         },
         (guildSettings) => {

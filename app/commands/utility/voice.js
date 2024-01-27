@@ -5,6 +5,7 @@ module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('voice')
 		.setDescription('Взаимодействие с личным каналом.')
+		.setDMPermission(false)
 		.addSubcommand(subcommand =>
 			subcommand
 				.setName('unlock')
