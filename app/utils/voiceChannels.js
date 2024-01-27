@@ -74,49 +74,82 @@ async function UpdateMenu(channel, voiceChannel)
 
 	// BUTTONS
 	let buttons = []
+	let buttons2 = []
 	if (isClosed || isHidden)
 	{
-		const button = new ButtonBuilder()
+		buttons.push(new ButtonBuilder()
 			.setCustomId('voice:unlock')
 			.setLabel('Открыть')
 			.setEmoji('🔓')
-			.setStyle(ButtonStyle.Success);
-		buttons.push(button)
+			.setStyle(ButtonStyle.Success))
 	}
 
 	if (!isClosed)
 	{
-		const button = new ButtonBuilder()
+		buttons.push(new ButtonBuilder()
 			.setCustomId('voice:lock')
 			.setLabel('Закрыть')
 			.setEmoji('🔒')
-			.setStyle(ButtonStyle.Danger);
-		buttons.push(button)
+			.setStyle(ButtonStyle.Danger))
 	}
 
 	if (!isHidden)
 	{
-		const button = new ButtonBuilder()
+		buttons.push(new ButtonBuilder()
 			.setCustomId('voice:hide')
 			.setLabel('Спрятать')
 			.setEmoji('🚷')
-			.setStyle(ButtonStyle.Secondary);
-		buttons.push(button)
+			.setStyle(ButtonStyle.Secondary))
 	}
 
-	const button = new ButtonBuilder()
+	buttons.push(new ButtonBuilder()
 		.setCustomId('voice:owner')
 		.setLabel('Сменить владельца')
 		.setEmoji('👑')
-		.setStyle(ButtonStyle.Primary);
-	buttons.push(button)
+		.setStyle(ButtonStyle.Primary))
+
+	// row 2
+	buttons2.push(new ButtonBuilder()
+		.setCustomId('voice:name')
+		.setLabel('Изменить название')
+		.setEmoji('📝')
+		.setStyle(ButtonStyle.Primary))
+
+	buttons2.push(new ButtonBuilder()
+		.setCustomId('voice:limit')
+		.setLabel('Изменить лимит пользователей')
+		.setEmoji('🤸🏻')
+		.setStyle(ButtonStyle.Primary))
+
+	buttons2.push(new ButtonBuilder()
+		.setCustomId('voice:nsfw')
+		.setLabel('Переключить возрастное ограничение')
+		.setEmoji('🔞')
+		.setStyle(ButtonStyle.Primary))
+
+	buttons2.push(new ButtonBuilder()
+		.setCustomId('voice:br')
+		.setLabel('Изменить битрейт')
+		.setEmoji('🎚️')
+		.setStyle(ButtonStyle.Primary))
 	// BUTTONS END
 
 	const newEmbed = EmbedBuilder.from(embed)
-		.setDescription(`Комната: <#${channel.topic}>\nВладелец: <@${ownerId}>\nСоздатель: <@${creatorId[1]}>\n\n${channelStatus}`)
+		.setDescription(`Комната: <#${channel.topic}>
+			Владелец: <@${ownerId}>
+			Создатель: <@${creatorId[1]}>
 
-	const row = new ActionRowBuilder().addComponents(buttons);
-	menu.edit({ embeds: [newEmbed], components: [row] })
+			Битрейт: ${voiceChannel.bitrate / 1000} kbps
+			Возрастное ограничение: ${voiceChannel.nsfw ? "✅" : "❎"}
+
+			${channelStatus}`)
+
+	const row = new ActionRowBuilder()
+		.addComponents(buttons)
+	const row2 = new ActionRowBuilder()
+		.addComponents(buttons2)
+
+	menu.edit({ embeds: [newEmbed], components: [row, row2] })
 }
 
 async function RandomOwner(channel, textChannel, channelMembers, guildData)
@@ -370,6 +403,55 @@ async function VoiceKick(interaction, voiceChannel, member)
 	return true
 }
 
+async function SetVoiceName(interaction, voiceChannel, name)
+{
+	name = name && name.trim()
+	if (!name || name == "")
+	{
+		await interaction.reply({ content: `Ошибка! Пустое название канала.`, ephemeral: true })
+		return false
+	}
+
+	try {
+		await voiceChannel.edit({name})
+	} catch(e) {
+		await interaction.reply({ content: `Не удалось изменить название. Попробуйте позже!`, ephemeral: true })
+		return false
+	}
+	await interaction.reply({ content: `Новое название канала: \`${name}\``, ephemeral: true })
+	return true
+}
+
+async function SetVoiceNsfw(interaction, voiceChannel, nsfw)
+{
+	await voiceChannel.edit({nsfw})
+	await UpdateMenu(false, voiceChannel)
+	await interaction.reply({ content: `Возрастное ограничение ${nsfw ? "включено" : "выключено"}`, ephemeral: true })
+	return true
+}
+
+async function SetVoiceBitrate(interaction, voiceChannel, bitrate)
+{
+	bitrate = Math.max( Math.min(bitrate, 96), 8 )
+
+	await voiceChannel.edit({bitrate: bitrate * 1000})
+	await UpdateMenu(false, voiceChannel)
+	await interaction.reply({ content: `Битрейт теперь: ${bitrate} kbps`, ephemeral: true })
+	return true
+}
+
+
+async function SetVoiceUserLimit(interaction, voiceChannel, userLimit)
+{
+	userLimit = Math.max( Math.min(userLimit, 99), 0 )
+	await voiceChannel.edit({userLimit})
+
+	let content = userLimit > 0 ? `Установлен лимит пользователей: ${userLimit}` : `Лимит пользователей убран`
+	await interaction.reply({ content, ephemeral: true })
+
+	return true
+}
+
 /* ========================================================================== */
 /*                                   EXPORT                                   */
 /* ========================================================================== */
@@ -388,5 +470,9 @@ module.exports = {
 		SetVoiceOwner,
 		VoiceBan,
 		VoiceKick,
+		SetVoiceName,
+		SetVoiceNsfw,
+		SetVoiceBitrate,
+		SetVoiceUserLimit,
 	},
 }
