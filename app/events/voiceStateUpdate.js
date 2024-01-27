@@ -105,7 +105,7 @@ async function JoinVoice(oldState, newState, guildData)
 	if (member.id == VoiceChannels.GetOwner(channel)) return false
 
 	channel.send({content: `<@${member.id}> присоединился к каналу.`, allowedMentions: { repliedUser: false }})
-	VoiceChannels.VoiceLog(voiceChannel, 'Присоединение к каналу', `Участник: <@${member.id}>`)
+	VoiceChannels.VoiceLog(channel, 'Присоединение к каналу', `Участник: <@${member.id}>`)
 }
 
 async function LeaveVoice(oldState, newState, guildData)
@@ -139,7 +139,7 @@ async function LeaveVoice(oldState, newState, guildData)
 		}
 
 		channel.send({content: `<@${member.id}> покинул канал.`, allowedMentions: { repliedUser: false }});
-		VoiceChannels.VoiceLog(voiceChannel, 'Отключение от каналу', `Участник: <@${member.id}>`)
+		VoiceChannels.VoiceLog(channel, 'Отключение от каналу', `Участник: <@${member.id}>`)
 
 		return true
 	} catch(e) {
