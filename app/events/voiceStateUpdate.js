@@ -1,8 +1,7 @@
 const { EmbedBuilder, Events, ChannelType, PermissionFlagsBits, channelLink } = require('discord.js');
 const { VoiceChannels } = require('../utils');
 
-async function CreateVoice(oldState, newState, guildData)
-{
+async function CreateVoice(oldState, newState, guildData) {
 	let member = newState.member
 	let guild = newState.guild
 	let newChannel = newState.channel
@@ -39,8 +38,7 @@ async function CreateVoice(oldState, newState, guildData)
 				],
 			}
 		]
-		if (guildData.Settings.RegRole)
-		{
+		if (guildData.Settings.RegRole) {
 			permissionOverwrites[0].deny.push(PermissionFlagsBits.ViewChannel)
 			let id = permissionOverwrites.push({
 				id: guildData.Settings.RegRole,
@@ -48,33 +46,34 @@ async function CreateVoice(oldState, newState, guildData)
 					PermissionFlagsBits.Connect
 				]
 			})
-			if(isClosed)
+			if (isClosed)
 				permissionOverwrites[id - 1].deny = [PermissionFlagsBits.ViewChannel]
 			else
 				permissionOverwrites[id - 1].allow.push(PermissionFlagsBits.ViewChannel)
 		}
-		else if(isClosed)
-		{
+		else if (isClosed) {
 			permissionOverwrites[0].deny.push(PermissionFlagsBits.ViewChannel)
 		}
-		let voiceChannel = await guild.channels.create({ name: `Комната ${member.displayName || "???"}`, parent: guildData.VoiceCategory, type: ChannelType.GuildVoice, permissionOverwrites})
+		let voiceChannel = await guild.channels.create({ name: `Комната ${member.displayName || "???"}`, parent: guildData.VoiceCategory, type: ChannelType.GuildVoice, permissionOverwrites })
 		// await VoiceChannels.VoiceEmojiName(voiceChannel)
 
-		let textChannel = await guild.channels.create({ name: 'меню комнаты', parent: guildData.VoiceTextCategory, type: ChannelType.GuildText, permissionOverwrites: [
-			{
-				id: guild.id,
-				deny: [
-					PermissionFlagsBits.ViewChannel,
-					PermissionFlagsBits.SendMessages,
-				]
-			},
-			{
-				id: member.id,
-				allow: [
-					PermissionFlagsBits.ViewChannel,
-				],
-			}
-		], topic: voiceChannel.id })
+		let textChannel = await guild.channels.create({
+			name: 'меню комнаты', parent: guildData.VoiceTextCategory, type: ChannelType.GuildText, permissionOverwrites: [
+				{
+					id: guild.id,
+					deny: [
+						PermissionFlagsBits.ViewChannel,
+						PermissionFlagsBits.SendMessages,
+					]
+				},
+				{
+					id: member.id,
+					allow: [
+						PermissionFlagsBits.ViewChannel,
+					],
+				}
+			], topic: voiceChannel.id
+		})
 
 		const embed = new EmbedBuilder()
 			.setColor(0x00FFFF)
@@ -82,21 +81,20 @@ async function CreateVoice(oldState, newState, guildData)
 			.setDescription(`Подготовка меню...\nСоздатель: <@${member.id}>`)
 			.setTimestamp(Date.now())
 
-		await textChannel.send({embeds: [embed], allowedMentions: { repliedUser: false }})
+		await textChannel.send({ embeds: [embed], allowedMentions: { repliedUser: false } })
 		VoiceChannels.UpdateMenu(textChannel, voiceChannel)
 
 		member.voice.setChannel(voiceChannel)
-		VoiceChannels.VoiceLog(voiceChannel, 'Создание комнаты', `Создатель: <@${member.id}>`)
+		VoiceChannels.VoiceLog(voiceChannel, 'Создание комнаты', `Создатель: <@${member.id}>`, { iconURL: `https://i.imgur.com/Regjkt7.png`, color: `#0BDE00` })
 
 		return true
-	} catch(e) {
+	} catch (e) {
 		console.error(e)
 		return false
 	}
 }
 
-async function JoinVoice(oldState, newState, guildData)
-{
+async function JoinVoice(oldState, newState, guildData) {
 	let member = newState.member
 	let channel = newState.channel
 
@@ -104,12 +102,11 @@ async function JoinVoice(oldState, newState, guildData)
 	if (channel.id == guildData.VoiceCreate || channel.id == guildData.VoiceCreateClosed) return false
 	if (member.id == VoiceChannels.GetOwner(channel)) return false
 
-	channel.send({content: `<@${member.id}> присоединился к каналу.`, allowedMentions: { repliedUser: false }})
-	VoiceChannels.VoiceLog(channel, 'Присоединение к каналу', `Участник: <@${member.id}>`)
+	channel.send({ content: `<@${member.id}> присоединился к каналу.`, allowedMentions: { repliedUser: false } })
+	VoiceChannels.VoiceLog(channel, 'Присоединение к каналу', `Участник: <@${member.id}>`, { iconURL: `https://i.imgur.com/w1MM8oi.png`, color: `#009858` })
 }
 
-async function LeaveVoice(oldState, newState, guildData)
-{
+async function LeaveVoice(oldState, newState, guildData) {
 	let member = newState.member
 	let channel = oldState.channel
 
@@ -120,9 +117,8 @@ async function LeaveVoice(oldState, newState, guildData)
 	try {
 		channel = await channel.fetch()
 		let channelMembers = channel.members.filter(m => !m.user.bot)
-		if (channelMembers.size <= 0)
-		{
-			VoiceChannels.VoiceLog(channel, 'Удаление канала')
+		if (channelMembers.size <= 0) {
+			VoiceChannels.VoiceLog(channel, 'Удаление канала', '', { iconURL: `https://i.imgur.com/Nk7j0Si.png`, color: `#DE0000` })
 
 			textChannel.delete('Владелец покинул канал.');
 			channel.delete('Владелец покинул канал.');
@@ -132,17 +128,16 @@ async function LeaveVoice(oldState, newState, guildData)
 		let voiceOwner = VoiceChannels.GetOwner(channel)
 		let isVoiceOwner = member.id == voiceOwner
 
-		if (isVoiceOwner)
-		{
+		if (isVoiceOwner) {
 			await VoiceChannels.RandomOwner(channel, textChannel, channelMembers, guildData)
 			return true
 		}
 
-		channel.send({content: `<@${member.id}> покинул канал.`, allowedMentions: { repliedUser: false }});
-		VoiceChannels.VoiceLog(channel, 'Отключение от каналу', `Участник: <@${member.id}>`)
+		channel.send({ content: `<@${member.id}> покинул канал.`, allowedMentions: { repliedUser: false } });
+		VoiceChannels.VoiceLog(channel, 'Отключение от канала', `Участник: <@${member.id}>`, { iconURL: `https://i.imgur.com/Tr9tWIZ.png`, color: `#980000` })
 
 		return true
-	} catch(e) {
+	} catch (e) {
 		console.error(e)
 		return false
 	}

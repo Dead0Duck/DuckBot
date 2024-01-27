@@ -3,8 +3,7 @@ const { EmbedBuilder, PermissionFlagsBits, ButtonBuilder, ButtonStyle, ActionRow
 /* ========================================================================== */
 /*                              UTILITY FUNCTIONS                             */
 /* ========================================================================== */
-async function IsVoiceChannel(channel)
-{
+async function IsVoiceChannel(channel) {
 	const { GuildSchema } = process.mongo;
 
 	let guildId = channel.guild.id
@@ -14,19 +13,16 @@ async function IsVoiceChannel(channel)
 	return channel.parentId == guildData.VoiceCategory
 }
 
-function GetOwner(channel)
-{
-    let perms = channel.permissionOverwrites.cache
-    let owner = perms.find(p => p.allow.has(PermissionFlagsBits.ManageChannels))
-    owner = owner?.id
+function GetOwner(channel) {
+	let perms = channel.permissionOverwrites.cache
+	let owner = perms.find(p => p.allow.has(PermissionFlagsBits.ManageChannels))
+	owner = owner?.id
 
-    return owner
+	return owner
 }
 
-async function GetTextChannel(channel, guildData)
-{
-	if (!guildData)
-	{
+async function GetTextChannel(channel, guildData) {
+	if (!guildData) {
 		const { GuildSchema } = process.mongo;
 
 		guildData = await GuildSchema.findOne({ Guild: channel.guild.id })
@@ -37,13 +33,11 @@ async function GetTextChannel(channel, guildData)
 	return channels.find(chn => chn.parentId == guildData.VoiceTextCategory && chn.topic == channel.id) || false
 }
 
-async function GetVoiceChannel(channel)
-{
+async function GetVoiceChannel(channel) {
 	return await channel.guild.channels.fetch(channel.topic)
 }
 
-async function UpdateMenu(channel, voiceChannel)
-{
+async function UpdateMenu(channel, voiceChannel) {
 	channel = channel || voiceChannel && await GetTextChannel(voiceChannel)
 	voiceChannel = voiceChannel || channel && await GetVoiceChannel(channel)
 
@@ -75,8 +69,7 @@ async function UpdateMenu(channel, voiceChannel)
 	// BUTTONS
 	let buttons = []
 	let buttons2 = []
-	if (isClosed || isHidden)
-	{
+	if (isClosed || isHidden) {
 		buttons.push(new ButtonBuilder()
 			.setCustomId('voice:unlock')
 			.setLabel('Открыть')
@@ -84,8 +77,7 @@ async function UpdateMenu(channel, voiceChannel)
 			.setStyle(ButtonStyle.Success))
 	}
 
-	if (!isClosed)
-	{
+	if (!isClosed) {
 		buttons.push(new ButtonBuilder()
 			.setCustomId('voice:lock')
 			.setLabel('Закрыть')
@@ -93,8 +85,7 @@ async function UpdateMenu(channel, voiceChannel)
 			.setStyle(ButtonStyle.Danger))
 	}
 
-	if (!isHidden)
-	{
+	if (!isHidden) {
 		buttons.push(new ButtonBuilder()
 			.setCustomId('voice:hide')
 			.setLabel('Спрятать')
@@ -152,10 +143,8 @@ async function UpdateMenu(channel, voiceChannel)
 	menu.edit({ embeds: [newEmbed], components: [row, row2] })
 }
 
-async function RandomOwner(channel, textChannel, channelMembers, guildData)
-{
-	if (!guildData)
-	{
+async function RandomOwner(channel, textChannel, channelMembers, guildData) {
+	if (!guildData) {
 		const { GuildSchema } = process.mongo;
 
 		guildData = await GuildSchema.findOne({ Guild: channel.guild.id })
@@ -189,7 +178,7 @@ async function RandomOwner(channel, textChannel, channelMembers, guildData)
 		})
 
 		UpdateMenu(textChannel, channel)
-		channel.send({content: `<@${oldOwner.id}> покинул канал. Канал передан <@${newOwner.id}>`, allowedMentions: { users: [newOwner.id] }});
+		channel.send({ content: `<@${oldOwner.id}> покинул канал. Канал передан <@${newOwner.id}>`, allowedMentions: { users: [newOwner.id] } });
 		VoiceLog(channel, 'Отключение от каналу', `Участник: <@${oldOwner.id}>\nНовый владелец: ${newOwner.id}`)
 	} catch (e) {
 		console.error(e)
@@ -200,30 +189,28 @@ async function RandomOwner(channel, textChannel, channelMembers, guildData)
 }
 
 let logChannel
-async function VoiceLog(channel, title, desc = '')
-{
+async function VoiceLog(channel, title, desc = '', options = {}) {
 	if (!channel)
 		return;
 
-	try
-	{
+	try {
 		const { GuildSchema } = process.mongo;
 		const guildData = await GuildSchema.findOne({ Guild: channel.guild.id })
 		if (!guildData || !guildData.Settings.VoiceLogs) return false
-		
-		if (!logChannel || logChannel?.id != guildData.Settings.VoiceLogs)
-		{
+
+		if (!logChannel || logChannel?.id != guildData.Settings.VoiceLogs) {
 			logChannel = await channel.guild.channels.fetch(guildData.Settings.VoiceLogs)
 		}
 
 		const embed = new EmbedBuilder()
-			.setColor(0xFF0000)
-			.setTitle(title)
-			.setDescription(`Канал: ${channel.name} (<#${channel.id}>)\nID Канала: ${channel.id}\n${desc}`)
+			.setColor(options.color ? options.color : null)
+			.setAuthor({ name: title, iconURL: options.iconURL ? options.iconURL : null })
+			.setDescription(`Канал: [${channel.name}](${channel.url})\n${desc}`)
+			.setFooter({ text: channel.id, iconURL: `https://i.imgur.com/tVIEu1F.png` })
 			.setTimestamp(Date.now())
 
-		await logChannel.send({embeds: [embed], allowedMentions: { repliedUser: false }})
-	} catch(e) {
+		await logChannel.send({ embeds: [embed], allowedMentions: { repliedUser: false } })
+	} catch (e) {
 		console.error(e)
 	}
 }
@@ -234,16 +221,14 @@ const stateEmojis = {
 	"lock": "🔒",
 	"unlock": "🔓",
 }
-async function VoiceEmojiName(channel)
-{
+async function VoiceEmojiName(channel) {
 	try {
 		const oldName = channel.name
 		let name = channel.name
 
 		let emojiPos = name.search(emojiRegex)
 		let emoji = emojiPos > -1 && name.match(emojiRegex)[0]
-		if (emojiPos == 0 && Object.values(stateEmojis).includes(emoji))
-		{
+		if (emojiPos == 0 && Object.values(stateEmojis).includes(emoji)) {
 			name = name.substring(emoji.length).trim()
 		}
 
@@ -260,11 +245,10 @@ async function VoiceEmojiName(channel)
 			nameEmoji = stateEmojis.lock
 
 		name = `${nameEmoji} ${name}`
-		if (oldName != name)
-		{
-			await channel.edit({name})
+		if (oldName != name) {
+			await channel.edit({ name })
 		}
-	} catch(e) {
+	} catch (e) {
 		console.error(e)
 		return false
 	}
@@ -280,16 +264,14 @@ const stateText = {
 	"lock": "закрыт",
 	"unlock": "открыт",
 }
-async function SetVoiceState(interaction, voiceChannel, newState)
-{
+async function SetVoiceState(interaction, voiceChannel, newState) {
 	let guild = voiceChannel.guild
 	let newPerms = {
 		ViewChannel: true,
 		Connect: true,
 	}
 
-	switch(newState)
-	{
+	switch (newState) {
 		case "lock":
 			newPerms.Connect = false
 			break;
@@ -305,23 +287,20 @@ async function SetVoiceState(interaction, voiceChannel, newState)
 
 	await voiceChannel.permissionOverwrites.edit(everyoneId, newPerms)
 	await UpdateMenu(false, voiceChannel)
-	await interaction.reply({ content: `Канал теперь ${stateText[ newState ]}.`, ephemeral: true })
+	await interaction.reply({ content: `Канал теперь ${stateText[newState]}.`, ephemeral: true })
 	// await VoiceEmojiName(voiceChannel)
-	VoiceLog(voiceChannel, 'Изменение канала', `Видимость канала: ${stateText[ newState ]}`)
+	VoiceLog(voiceChannel, 'Изменение канала', `Видимость канала: ${stateText[newState]}`)
 	return true
 }
 
-async function SetVoiceOwner(interaction, voiceChannel, newOwner)
-{
-	if (!newOwner.voice || newOwner.voice.channelId != voiceChannel.id)
-	{
+async function SetVoiceOwner(interaction, voiceChannel, newOwner) {
+	if (!newOwner.voice || newOwner.voice.channelId != voiceChannel.id) {
 		await interaction.reply({ content: `Пользователь должен находиться в этом личном канале.`, ephemeral: true })
 		return true
 	}
 
 	let voiceOwner = GetOwner(voiceChannel)
-	if (voiceOwner == newOwner.id)
-	{
+	if (voiceOwner == newOwner.id) {
 		await interaction.reply({ content: `Этот пользователь уже владелеет этим каналов.`, ephemeral: true })
 		return true
 	}
@@ -340,7 +319,7 @@ async function SetVoiceOwner(interaction, voiceChannel, newOwner)
 
 	try {
 		await interaction.reply({ content: `Канал передан <@${newOwner.id}>.`, ephemeral: true })
-	} catch(e) { }
+	} catch (e) { }
 
 	let textChannel = await GetTextChannel(voiceChannel)
 	await textChannel.permissionOverwrites.edit(newOwner.id, {
@@ -350,18 +329,16 @@ async function SetVoiceOwner(interaction, voiceChannel, newOwner)
 		ViewChannel: null,
 	})
 
-	
+
 	await UpdateMenu(textChannel, voiceChannel)
 	await voiceChannel.send({ content: `Канал передан <@${newOwner.id}>.`, allowedMentions: { users: [newOwner.id] } })
 	VoiceLog(voiceChannel, 'Передача канала', `Новый владелец: <@${newOwner.id}>`)
 	return true
 }
 
-async function VoiceBan(interaction, voiceChannel, member)
-{
+async function VoiceBan(interaction, voiceChannel, member) {
 	let voiceOwner = GetOwner(voiceChannel)
-	if (voiceOwner == member.id)
-	{
+	if (voiceOwner == member.id) {
 		await interaction.reply({ content: `Вы не можете забанить владельца.`, ephemeral: true })
 		return true
 	}
@@ -373,7 +350,7 @@ async function VoiceBan(interaction, voiceChannel, member)
 		ViewChannel: isBanned,
 	})
 
-	if(!isBanned && voiceChannel.members.has(member.id))
+	if (!isBanned && voiceChannel.members.has(member.id))
 		member.voice.disconnect("Забанен в этом канале.")
 
 	await interaction.reply({ content: `<@${member.id}> был ${isBanned ? "разбанен" : "забанен"}.`, allowedMentions: { users: [member.id] }, ephemeral: true })
@@ -381,17 +358,14 @@ async function VoiceBan(interaction, voiceChannel, member)
 	return true
 }
 
-async function VoiceKick(interaction, voiceChannel, member)
-{
-	if (!member.voice || member.voice.channelId != voiceChannel.id)
-	{
+async function VoiceKick(interaction, voiceChannel, member) {
+	if (!member.voice || member.voice.channelId != voiceChannel.id) {
 		await interaction.reply({ content: `Пользователь должен находиться в этом личном канале.`, ephemeral: true })
 		return true
 	}
 
 	let voiceOwner = GetOwner(voiceChannel)
-	if (voiceOwner == member.id)
-	{
+	if (voiceOwner == member.id) {
 		await interaction.reply({ content: `Вы не можете выгнать владельца.`, ephemeral: true })
 		return true
 	}
@@ -403,18 +377,16 @@ async function VoiceKick(interaction, voiceChannel, member)
 	return true
 }
 
-async function SetVoiceName(interaction, voiceChannel, name)
-{
+async function SetVoiceName(interaction, voiceChannel, name) {
 	name = name && name.trim()
-	if (!name || name == "")
-	{
+	if (!name || name == "") {
 		await interaction.reply({ content: `Ошибка! Пустое название канала.`, ephemeral: true })
 		return false
 	}
 
 	try {
-		await voiceChannel.edit({name})
-	} catch(e) {
+		await voiceChannel.edit({ name })
+	} catch (e) {
 		await interaction.reply({ content: `Не удалось изменить название. Попробуйте позже!`, ephemeral: true })
 		return false
 	}
@@ -422,29 +394,26 @@ async function SetVoiceName(interaction, voiceChannel, name)
 	return true
 }
 
-async function SetVoiceNsfw(interaction, voiceChannel, nsfw)
-{
-	await voiceChannel.edit({nsfw})
+async function SetVoiceNsfw(interaction, voiceChannel, nsfw) {
+	await voiceChannel.edit({ nsfw })
 	await UpdateMenu(false, voiceChannel)
 	await interaction.reply({ content: `Возрастное ограничение ${nsfw ? "включено" : "выключено"}`, ephemeral: true })
 	return true
 }
 
-async function SetVoiceBitrate(interaction, voiceChannel, bitrate)
-{
-	bitrate = Math.max( Math.min(bitrate, 96), 8 )
+async function SetVoiceBitrate(interaction, voiceChannel, bitrate) {
+	bitrate = Math.max(Math.min(bitrate, 96), 8)
 
-	await voiceChannel.edit({bitrate: bitrate * 1000})
+	await voiceChannel.edit({ bitrate: bitrate * 1000 })
 	await UpdateMenu(false, voiceChannel)
 	await interaction.reply({ content: `Битрейт теперь: ${bitrate} kbps`, ephemeral: true })
 	return true
 }
 
 
-async function SetVoiceUserLimit(interaction, voiceChannel, userLimit)
-{
-	userLimit = Math.max( Math.min(userLimit, 99), 0 )
-	await voiceChannel.edit({userLimit})
+async function SetVoiceUserLimit(interaction, voiceChannel, userLimit) {
+	userLimit = Math.max(Math.min(userLimit, 99), 0)
+	await voiceChannel.edit({ userLimit })
 
 	let content = userLimit > 0 ? `Установлен лимит пользователей: ${userLimit}` : `Лимит пользователей убран`
 	await interaction.reply({ content, ephemeral: true })
