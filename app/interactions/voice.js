@@ -1,4 +1,4 @@
-const { StringSelectMenuBuilder, StringSelectMenuOptionBuilder, ActionRowBuilder } = require('discord.js')
+const { StringSelectMenuBuilder, StringSelectMenuOptionBuilder, ActionRowBuilder, ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js')
 const { VoiceChannels } = require('../utils');
 
 const interId = "voice"
@@ -63,6 +63,91 @@ module.exports = {
 				});
 
 				break;
+			case "name":
+				if (customId[2] == "set")
+				{
+					await VoiceChannels.Commands.SetVoiceName(interaction, voiceChannel, interaction.fields.getTextInputValue('name'))
+
+					return
+				}
+
+				let nameModal = new ModalBuilder()
+					.setCustomId(`${interId}:name:set`)
+					.setTitle('Изменение названия личной комнаты');
+
+				let nameInput = new TextInputBuilder()
+					.setCustomId('name')
+					.setLabel("Название личного канала")
+					.setStyle(TextInputStyle.Short)
+					.setValue(voiceChannel.name)
+					.setMaxLength(100)
+					.setRequired(true);
+
+				nameModal.addComponents(new ActionRowBuilder()
+					.addComponents(nameInput));
+
+				await interaction.showModal(nameModal);
+				break;
+			case "nsfw":
+				await VoiceChannels.Commands.SetVoiceNsfw(interaction, voiceChannel, !voiceChannel.nsfw)
+				break;
+			case "br":
+				if (customId[2] == "set")
+				{
+					let num = interaction.fields.getTextInputValue('br')
+						num = parseInt(num) || 64
+
+					await VoiceChannels.Commands.SetVoiceBitrate(interaction, voiceChannel, num)
+					return
+				}
+
+				let brModal = new ModalBuilder()
+					.setCustomId(`${interId}:br:set`)
+					.setTitle('Изменение битрейта личной комнаты');
+
+				let brInput = new TextInputBuilder()
+					.setCustomId('br')
+					.setLabel("Число от 8 до 96. (деф. 64)")
+					.setStyle(TextInputStyle.Short)
+					.setValue(`${voiceChannel.bitrate / 1000}`)
+					.setMaxLength(2)
+					.setRequired(true);
+
+				brModal.addComponents(new ActionRowBuilder()
+					.addComponents(brInput));
+
+				await interaction.showModal(brModal);
+				break;
+			case "limit":
+				if (customId[2] == "set")
+				{
+					let num = interaction.fields.getTextInputValue('limit')
+						num = parseInt(num) ?? 0
+
+					await VoiceChannels.Commands.SetVoiceUserLimit(interaction, voiceChannel, num)
+					return
+				}
+
+				let limitModal = new ModalBuilder()
+					.setCustomId(`${interId}:limit:set`)
+					.setTitle('Изменение лимита в личной комнате');
+
+				let limitInput = new TextInputBuilder()
+					.setCustomId('limit')
+					.setLabel("Число от 0 до 99. (0 - выкл)")
+					.setStyle(TextInputStyle.Short)
+					.setValue(`${voiceChannel.userLimit || 0}`)
+					.setMaxLength(2)
+					.setRequired(true);
+
+				limitModal.addComponents(new ActionRowBuilder()
+					.addComponents(limitInput));
+
+				await interaction.showModal(limitModal);
+				break;
+
+			default:
+				throw "Unknown type"
 		}
 	},
 }

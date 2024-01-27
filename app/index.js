@@ -10,7 +10,12 @@ const client = new Client({
 		GatewayIntentBits.Guilds,
 		GatewayIntentBits.GuildMembers,
 		GatewayIntentBits.GuildVoiceStates,
-	]
+	],
+	rest: {
+		rejectOnRateLimit: (info) => { 
+			return info.route == "/channels/:id";
+		},
+	},
 });
 
 
