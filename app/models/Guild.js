@@ -14,5 +14,7 @@ const Schema = new mongo.Schema({
 	PartiesThread: String,
 	PartiesWebhookId: String,
 	PartiesWebhookToken: String,
+
+	Warnings: [{ user: String, counter: Number }]
 });
 module.exports = mongo.model('guilds', Schema);

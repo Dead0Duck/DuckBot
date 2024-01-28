@@ -38,6 +38,9 @@ module.exports = {
         if (member.id === interaction.applicationId) {
             return await interaction.reply({ content: "https://media1.tenor.com/m/hghruQWRyi0AAAAC/jojo-i-refuse.gif", ephemeral: true })
         }
+        if (member.user.bot) {
+            return await interaction.reply({ content: `Вы действительно хотите наказать бота?`, ephemeral: true })
+        }
         if (!ms) {
             return await interaction.reply({ content: "Ошибка в аргументе продолжительности.", ephemeral: true })
         }
