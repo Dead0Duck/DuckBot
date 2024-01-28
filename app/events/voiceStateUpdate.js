@@ -156,7 +156,7 @@ module.exports = {
 		let oldChannel = oldState.channel
 
 		let member = newState.member
-		if (member.user.bot || newChannel?.id == oldChannel?.id)
+		if (!member || member.user.bot || newChannel?.id == oldChannel?.id)
 			return
 
 		CreateVoice(oldState, newState, guildData)

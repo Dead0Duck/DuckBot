@@ -179,7 +179,7 @@ async function RandomOwner(channel, textChannel, channelMembers, guildData) {
 
 		UpdateMenu(textChannel, channel)
 		channel.send({ content: `<@${oldOwner.id}> покинул канал. Канал передан <@${newOwner.id}>`, allowedMentions: { users: [newOwner.id] } });
-		VoiceLog(channel, 'Отключение от каналу', `Участник: <@${oldOwner.id}>\nНовый владелец: ${newOwner.id}`)
+		VoiceLog(channel, 'Отключение от канала', `Участник: <@${oldOwner.id}>\nНовый владелец: ${newOwner.id}`, { iconURL: `https://i.imgur.com/Tr9tWIZ.png`, color: `#980000` })
 	} catch (e) {
 		console.error(e)
 		return false
@@ -289,7 +289,7 @@ async function SetVoiceState(interaction, voiceChannel, newState) {
 	await UpdateMenu(false, voiceChannel)
 	await interaction.reply({ content: `Канал теперь ${stateText[newState]}.`, ephemeral: true })
 	// await VoiceEmojiName(voiceChannel)
-	VoiceLog(voiceChannel, 'Изменение канала', `Видимость канала: ${stateText[newState]}`)
+	VoiceLog(voiceChannel, 'Изменение канала', `Видимость канала: ${stateText[newState]}`, { iconURL: `https://i.imgur.com/KXzPGrU.png`, color: `#47C8FF` })
 	return true
 }
 
@@ -332,7 +332,7 @@ async function SetVoiceOwner(interaction, voiceChannel, newOwner) {
 
 	await UpdateMenu(textChannel, voiceChannel)
 	await voiceChannel.send({ content: `Канал передан <@${newOwner.id}>.`, allowedMentions: { users: [newOwner.id] } })
-	VoiceLog(voiceChannel, 'Передача канала', `Новый владелец: <@${newOwner.id}>`)
+	VoiceLog(voiceChannel, 'Передача канала', `Новый владелец: <@${newOwner.id}>`, { iconURL: `https://i.imgur.com/lw7Bghn.png`, color: `#FF6B00` })
 	return true
 }
 
@@ -354,7 +354,7 @@ async function VoiceBan(interaction, voiceChannel, member) {
 		member.voice.disconnect("Забанен в этом канале.")
 
 	await interaction.reply({ content: `<@${member.id}> был ${isBanned ? "разбанен" : "забанен"}.`, allowedMentions: { users: [member.id] }, ephemeral: true })
-	VoiceLog(voiceChannel, 'Бан в канале', `<@${member.id}> был ${isBanned ? "разбанен" : "забанен"}`)
+	VoiceLog(voiceChannel, 'Бан в канале', `<@${member.id}> был ${isBanned ? "разбанен" : "забанен"}`, { iconURL: isBanned ? `https://i.imgur.com/H0JFOah.png` : `https://i.imgur.com/L5EWJTe.png`, color: isBanned ? `#00D12E` : `#D10000` })
 	return true
 }
 
@@ -373,7 +373,7 @@ async function VoiceKick(interaction, voiceChannel, member) {
 	member.voice.disconnect("Кикнут из канала.")
 
 	await interaction.reply({ content: `Кикаем <@${member.id}>.`, allowedMentions: { users: [member.id] }, ephemeral: true })
-	VoiceLog(voiceChannel, 'Кик в канале', `Участник: <@${member.id}>`)
+	VoiceLog(voiceChannel, 'Кик в канале', `Участник: <@${member.id}>`, { iconURL: `https://i.imgur.com/p7Fx3sA.png`, color: `#D10000` })
 	return true
 }
 
