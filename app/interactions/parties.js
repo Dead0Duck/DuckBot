@@ -342,9 +342,10 @@ module.exports = {
                         if (customId[1] === 'deleteConfirm') {
                             deleteConfirmation.channel.delete()
                             await PartySchema.deleteOne({ ThreadId: interaction.channel.id })
+                            return
                         }
                         if (customId[1] === 'deleteCancel') {
-                            interaction.deleteReply()
+                            return interaction.deleteReply()
                         }
                     } catch (e) {
                         if (e.code === DiscordjsErrorCodes.InteractionCollectorError)
