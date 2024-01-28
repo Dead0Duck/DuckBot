@@ -10,9 +10,8 @@ module.exports = {
 		if (!guildData) return
 		if (!VoiceChannels.IsVoiceChannel(newChannel)) return
 
-		if (oldChannel.name != newChannel.name)
-		{
-			VoiceChannels.VoiceLog(newChannel, "Смена названия", `Старое название: ${oldChannel.name}`)
+		if (oldChannel.name != newChannel.name) {
+			VoiceChannels.VoiceLog(newChannel, "Смена названия", `Старое название: ${oldChannel.name}`, { iconURL: `https://i.imgur.com/NeCLhK3.png`, color: `#FFB800` })
 			// VoiceChannels.VoiceEmojiName(newChannel)
 		}
 	}
