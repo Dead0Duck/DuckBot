@@ -179,7 +179,7 @@ async function RandomOwner(channel, textChannel, channelMembers, guildData) {
 
 		UpdateMenu(textChannel, channel)
 		channel.send({ content: `<@${oldOwner.id}> покинул канал. Канал передан <@${newOwner.id}>`, allowedMentions: { users: [newOwner.id] } });
-		VoiceLog(channel, 'Отключение от канала', `Участник: <@${oldOwner.id}>\nНовый владелец: ${newOwner.id}`, { iconURL: `https://i.imgur.com/Tr9tWIZ.png`, color: `#980000` })
+		VoiceLog(channel, 'Отключение от канала', `Участник: <@${oldOwner.id}>\nНовый владелец: <@${newOwner.id}>`, { iconURL: `https://i.imgur.com/Tr9tWIZ.png`, color: `#980000` })
 	} catch (e) {
 		console.error(e)
 		return false
