@@ -11,32 +11,39 @@ module.exports = {
         .addUserOption(option =>
             option
                 .setName("user")
+                .setNameLocalization('ru', 'пользователь')
                 .setDescription("Пользователь, которого нужно наказать.")
                 .setRequired(true)
         )
         .addStringOption(option =>
             option
                 .setName("duration")
+                .setNameLocalization('ru', 'длительность')
                 .setDescription("Продолжительность бана в формате [число][первая буква единицы времени] либо 'перм'")
                 .setRequired(true)
         )
         .addStringOption(option =>
             option
                 .setName("reason")
+                .setNameLocalization('ru', 'причина')
                 .setDescription("Причина бана.")
                 .setRequired(true)
         )
         .addStringOption(option =>
             option
-                .setName("tip")
+                .setName("note")
+                .setNameLocalization('ru', 'заметка')
                 .setDescription("Примечание или описание ситуации.")
                 .setRequired(false)
         ),
     async execute(interaction) {
         const options = interaction.options
         const member = options.getMember('user')
+        if (!member) {
+            return await interaction.reply({ content: `Не удалось получить информацию о пользователе. Возможно он уже забанен либо вышел.`, ephemeral: true })
+        }
         const ms = Moderation.parseMSeconds(options.getString('duration'))
-        const { GuildSchema, AgendaScheduler } = process.mongo
+        const { GuildSchema } = process.mongo
         if (member.id === interaction.applicationId) {
             return await interaction.reply({ content: "https://tenor.com/view/nope-team-fortress2-tf2-engineer-engineer-tf2-gif-24716491", ephemeral: true })
         }
@@ -53,11 +60,16 @@ module.exports = {
             return await interaction.reply({ content: "Продолжительность бана не может быть менее минуты.", ephemeral: true })
         }
         try {
-            unbanDate = dayjs().add(ms, 'ms')
-            await member.send(`Вас забанили на сервере "${interaction.guild.name}"\n\nКем: <@${interaction.user.id}>\nПричина: ${options.getString('reason')}\nРазбан <t:${unbanDate.unix()}:R>`)
+            const unbanDate = dayjs().add(ms, 'ms')
+            await member.send(`Вас забанили на сервере "${interaction.guild.name}"\n\nКем: <@${interaction.user.id}>\nПричина: ${options.getString('reason')}\nРазбан <t:${unbanDate.unix()}:R>`).catch(() => { })
             member.ban({ reason: options.getString('reason') })
-            AgendaScheduler.schedule(unbanDate, "Unban", { userId: member.id, guildId: interaction.guild.id })
-            await interaction.reply({ content: `Пользователь <@${member.id}> был забанен. Разбан <t:${unbanDate.unix()}:R>[⠀](https://media1.tenor.com/m/inFUO9hugS8AAAAd/danganronpa-monokuma.gif)`, ephemeral: true })
+            const banData = await GuildSchema.findOne({ Guild: interaction.guild.id, Bans: { $elemMatch: { user: member.id } } }, { "Bans.$": 1 })
+            if (!banData) {
+                await GuildSchema.updateOne({ Guild: interaction.guild.id }, { $push: { Bans: { user: member.id, unban: unbanDate.toDate() } } })
+            } else {
+                await GuildSchema.updateOne({ Guild: interaction.guild.id, Bans: { $elemMatch: { user: member.id } } }, { $set: { "Bans.$[]": { user: member.id, unban: unbanDate.toDate() } } })
+            }
+            await interaction.reply({ content: `Пользователь <@${member.id}> был забанен. Разбан <t:${unbanDate.unix()}:R>.[⠀](https://media1.tenor.com/m/inFUO9hugS8AAAAd/danganronpa-monokuma.gif)`, ephemeral: true })
         } catch (e) {
             console.error(e)
         }

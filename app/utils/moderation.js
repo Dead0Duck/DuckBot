@@ -33,13 +33,32 @@ module.exports = {
         return dayjs.duration(ms, 'ms').locale('ru').humanize()
     },
     defineJobs: async () => {
-        const { AgendaScheduler } = process.mongo
-        AgendaScheduler.define("Unban", (job) => {
+        const { AgendaScheduler, GuildSchema } = process.mongo
+        AgendaScheduler.define("UnbanWave", async () => {
             client = process.disClient
-            const data = job.attrs.data
-            client.guilds.fetch({ guild: data.guildId }).then(guild => guild.bans.remove(data.userId))
-            console.log("Unbanned", data)
+            const toUnban = await GuildSchema.find({ Bans: { $elemMatch: { unban: { $lte: new Date() } } } }, { "Bans.$": 1, "Guild": 1 })
+            const promises = []
+            toUnban.forEach(async (data) => {
+                promises.push(client.guilds.fetch(data.Guild).then(guild => {
+                    for (let index = 0; index < data.Bans.length; index++) {
+                        const element = data.Bans[index];
+                        guild.bans.remove(element.user, 'истёк срок бана').catch((e) => {
+                            if (e.code !== 10026) {
+                                console.error(e)
+                            }
+                        })
+                        return element.user
+                    }
+                }))
+            })
+
+            Promise.all(promises).then(async (values) => {
+                const result = await GuildSchema.updateMany({ Bans: { $elemMatch: { unban: { $lte: new Date() } } } }, { $pull: { Bans: { user: { $in: values.filter(value => value !== undefined) } } } })
+            })
         })
+
         await AgendaScheduler.start()
+        //AgendaScheduler.now("UnbanWave")
+        AgendaScheduler.every("1 minute", "UnbanWave")
     }
 }
