@@ -10,30 +10,37 @@ module.exports = {
         .addUserOption(option =>
             option
                 .setName("user")
+                .setNameLocalization('ru', 'пользователь')
                 .setDescription("Пользователь, которого нужно наказать.")
                 .setRequired(true)
         )
         .addStringOption(option =>
             option
                 .setName("duration")
+                .setNameLocalization('ru', 'длительность')
                 .setDescription("Продолжительность мута в формате [число][первая буква единицы времени].")
                 .setRequired(true)
         )
         .addStringOption(option =>
             option
                 .setName("reason")
+                .setNameLocalization('ru', 'причина')
                 .setDescription("Причина мута.")
                 .setRequired(true)
         )
         .addStringOption(option =>
             option
-                .setName("tip")
+                .setName("note")
+                .setNameLocalization('ru', 'заметка')
                 .setDescription("Примечание или описание ситуации.")
                 .setRequired(false)
         ),
     async execute(interaction) {
         const options = interaction.options
         const member = options.getMember('user')
+        if (!member) {
+            return await interaction.reply({ content: `Не удалось получить информацию о пользователе.`, ephemeral: true })
+        }
         ms = Moderation.parseMSeconds(options.getString('duration'))
         if (member.id === interaction.applicationId) {
             return await interaction.reply({ content: "https://media1.tenor.com/m/hghruQWRyi0AAAAC/jojo-i-refuse.gif", ephemeral: true })

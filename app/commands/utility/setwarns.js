@@ -9,24 +9,30 @@ module.exports = {
         .addUserOption(option =>
             option
                 .setName("user")
+                .setNameLocalization('ru', 'пользователь')
                 .setDescription("Пользователь, которому надо установить количество варнов.")
                 .setRequired(true)
         )
         .addIntegerOption(option =>
             option
                 .setName("counter")
+                .setNameLocalization('ru', 'количество')
                 .setDescription("Количество варнов.")
                 .setRequired(true)
         )
         .addStringOption(option =>
             option
-                .setName("tip")
+                .setName("note")
+                .setNameLocalization('ru', 'заметка')
                 .setDescription("Примечание или описание ситуации.")
                 .setRequired(false)
         ),
     async execute(interaction) {
         const options = interaction.options
         const member = options.getMember('user')
+        if (!member) {
+            return await interaction.reply({ content: `Не удалось получить информацию о пользователе.`, ephemeral: true })
+        }
         const { GuildSchema } = process.mongo
         const counter = options.getInteger('counter')
         if (member.id === interaction.applicationId) {
