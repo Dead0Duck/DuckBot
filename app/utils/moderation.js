@@ -31,5 +31,15 @@ module.exports = {
     },
     humanize: (ms) => {
         return dayjs.duration(ms, 'ms').locale('ru').humanize()
+    },
+    defineJobs: async () => {
+        const { AgendaScheduler } = process.mongo
+        AgendaScheduler.define("Unban", (job) => {
+            client = process.disClient
+            const data = job.attrs.data
+            client.guilds.fetch({ guild: data.guildId }).then(guild => guild.bans.remove(data.userId))
+            console.log("Unbanned", data)
+        })
+        await AgendaScheduler.start()
     }
 }

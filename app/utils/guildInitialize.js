@@ -190,12 +190,14 @@ module.exports = {
 				await GuildSchema.create({
 					Guild: guild.id,
 					DataVersion: 2,
-					Warnings: Array[null]
+					Warnings: Array[null],
+					Bans: Array[null]
 				})
 			}
 			if (guildData.DataVersion < 2) {
 				guildData.DataVersion = 2
 				guildData.Warnings = Array[null]
+				guildData.Bans = Array[null]
 				guildData.save()
 			}
 
