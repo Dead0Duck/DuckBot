@@ -2,6 +2,27 @@ const dayjs = require('dayjs');
 const { SlashCommandBuilder, PermissionsBitField } = require('discord.js');
 const { Moderation } = require('../../utils')
 
+async function ban(interaction, member, options, ms = null) {
+    const { GuildSchema } = process.mongo
+    const unbanDate = ms ? dayjs().add(ms, 'ms') : null
+    const unbanString = unbanDate ? `Разбан <t:${unbanDate.unix()}:R>` : ``
+    await member.send(`Вас забанили ${ms ? '' : 'навсегда '}на сервере "${interaction.guild.name}"\n\nКем: <@${interaction.user.id}>\nПричина: ${options.getString('reason')}\n${unbanString}`).catch(() => { })
+    member.ban({ reason: options.getString('reason') })
+    const banData = await GuildSchema.findOne({ Guild: interaction.guild.id, Bans: { $elemMatch: { user: member.id } } }, { "Bans.$": 1 })
+    if (!banData) {
+        if (ms)
+            await GuildSchema.updateOne({ Guild: interaction.guild.id }, { $push: { Bans: { user: member.id, unban: unbanDate.toDate() } } })
+    } else {
+        if (ms)
+            await GuildSchema.updateOne({ Guild: interaction.guild.id, Bans: { $elemMatch: { user: member.id } } }, { $set: { "Bans.$[]": { user: member.id, unban: unbanDate.toDate() } } })
+        else {
+            await GuildSchema.updateOne({ Guild: interaction.guild.id }, { $pull: { Bans: { user: member.id } } })
+        }
+    }
+    await interaction.reply({ content: `Пользователь <@${member.id}> был забанен${ms ? `. ${unbanString}.` : ' навсегда.'}[⠀](https://media1.tenor.com/m/inFUO9hugS8AAAAd/danganronpa-monokuma.gif)`, ephemeral: true })
+}
+
+
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('ban')
@@ -43,7 +64,6 @@ module.exports = {
             return await interaction.reply({ content: `Не удалось получить информацию о пользователе. Возможно он уже забанен либо вышел.`, ephemeral: true })
         }
         const ms = Moderation.parseMSeconds(options.getString('duration'))
-        const { GuildSchema } = process.mongo
         if (member.id === interaction.applicationId) {
             return await interaction.reply({ content: "https://tenor.com/view/nope-team-fortress2-tf2-engineer-engineer-tf2-gif-24716491", ephemeral: true })
         }
@@ -54,22 +74,16 @@ module.exports = {
             return await interaction.reply({ content: `У бота нет прав на блокировку этого пользователя.`, ephemeral: true })
         }
         if (!ms) {
-            return await interaction.reply({ content: "Ошибка в аргументе продолжительности.", ephemeral: true })
+            if (!['perm', 'перм'].includes(options.getString('duration')))
+                return await interaction.reply({ content: "Ошибка в аргументе продолжительности.", ephemeral: true })
+            else
+                return ban(interaction, member, options)
         }
         if (ms < 60_000) {
             return await interaction.reply({ content: "Продолжительность бана не может быть менее минуты.", ephemeral: true })
         }
         try {
-            const unbanDate = dayjs().add(ms, 'ms')
-            await member.send(`Вас забанили на сервере "${interaction.guild.name}"\n\nКем: <@${interaction.user.id}>\nПричина: ${options.getString('reason')}\nРазбан <t:${unbanDate.unix()}:R>`).catch(() => { })
-            member.ban({ reason: options.getString('reason') })
-            const banData = await GuildSchema.findOne({ Guild: interaction.guild.id, Bans: { $elemMatch: { user: member.id } } }, { "Bans.$": 1 })
-            if (!banData) {
-                await GuildSchema.updateOne({ Guild: interaction.guild.id }, { $push: { Bans: { user: member.id, unban: unbanDate.toDate() } } })
-            } else {
-                await GuildSchema.updateOne({ Guild: interaction.guild.id, Bans: { $elemMatch: { user: member.id } } }, { $set: { "Bans.$[]": { user: member.id, unban: unbanDate.toDate() } } })
-            }
-            await interaction.reply({ content: `Пользователь <@${member.id}> был забанен. Разбан <t:${unbanDate.unix()}:R>.[⠀](https://media1.tenor.com/m/inFUO9hugS8AAAAd/danganronpa-monokuma.gif)`, ephemeral: true })
+            return ban(interaction, member, options, ms)
         } catch (e) {
             console.error(e)
         }
