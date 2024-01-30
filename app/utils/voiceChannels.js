@@ -42,7 +42,8 @@ async function UpdateMenu(channel, voiceChannel) {
 	voiceChannel = voiceChannel || channel && await GetVoiceChannel(channel)
 
 	const guild = channel.guild
-	let menu = await channel.messages.fetch({ limit: 1 })
+	let messages = await channel.messages.fetch()
+	let menu = messages.filter(msg => msg.content == "")
 	menu = menu.first()
 
 	const { GuildSchema } = process.mongo;
