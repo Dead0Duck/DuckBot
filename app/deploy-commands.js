@@ -69,6 +69,12 @@ module.exports = (clientId) => {
 				Routes.applicationCommands(clientId),
 				{ body: commands },
 			);
+			
+			// Добавим идшники команд в процесс, чтобы легче было потом ссылаться на них в пингах.
+			process.disCmds = {}
+			data.forEach(cmd => {
+				process.disCmds[cmd.name] = cmd.id
+			});
 
 			console.log(`Successfully reloaded ${data.length} application (/) commands.`);
 		} catch (error) {
