@@ -336,6 +336,41 @@ async function SetVoiceOwner(interaction, voiceChannel, newOwner) {
 	return true
 }
 
+async function VoiceInvite(interaction, voiceChannel, member, ping)
+{
+	if (member.user.bot)
+	{
+		await interaction.reply({ content: `Нельзя приглашать ботов 💀`, ephemeral: true })
+		return true
+	}
+
+	if (member.voice?.channelId == voiceChannel.id)
+	{
+		await interaction.reply({ content: `Пользователь <@${member.id}> уже здесь.`, ephemeral: true })
+		return true
+	}
+
+	let memberPerms = voiceChannel.permissionOverwrites.cache.get(member.id)
+	if (memberPerms?.allow.has(PermissionFlagsBits.ViewChannel))
+	{
+		await voiceChannel.send({ content: `Пользователь <@${member.id}> уже имеет доступ к каналу.`, allowedMentions: { users: [member.id] } })
+		return false
+	}
+
+	voiceChannel.permissionOverwrites.create(member.id, {
+		Connect: true,
+		ViewChannel: true,
+	})
+
+	if (ping)
+		member.user.send(`<@${interaction.user.id}> приглашает Вас в канал <#${voiceChannel.id}>!`).catch(e => console.error(e))
+
+	await interaction.reply({ content: `<@${member.id}> был приглашен в канал.`, allowedMentions: { users: [member.id] }, ephemeral: true })
+	// TODO: @relitrix, сделай значки
+	VoiceLog(voiceChannel, 'Приглашение в канал', `Приглашен: <@${member.id}>`, { iconURL: `https://i.imgur.com/p7Fx3sA.png`, color: `#D10000` })
+	return true
+}
+
 async function VoiceBan(interaction, voiceChannel, member) {
 	let voiceOwner = GetOwner(voiceChannel)
 	if (voiceOwner == member.id) {
@@ -437,6 +472,7 @@ module.exports = {
 	Commands: {
 		SetVoiceState,
 		SetVoiceOwner,
+		VoiceInvite,
 		VoiceBan,
 		VoiceKick,
 		SetVoiceName,

@@ -18,6 +18,12 @@ module.exports = {
 			subcommand
 				.setName('hide')
 				.setDescription('Скрыть личный канал.'))
+		.addSubcommand(subcommand => 
+			subcommand
+				.setName('invite')
+				.setDescription('Пригласить пользователя в личный канал')
+				.addUserOption(option => option.setName('target').setDescription('Пользователь').setRequired(true))
+				.addBooleanOption(option => option.setName('ping').setDescription('Нужно ли оповещать о приглашении? (деф. Да)')))
 		.addSubcommand(subcommand =>
 			subcommand
 				.setName('ban')
@@ -78,6 +84,10 @@ module.exports = {
 				await VoiceChannels.Commands.SetVoiceState(interaction, channel, cmd);
 				return;
 
+			case "invite":
+				let bool = interaction.options.getBoolean('ping') ?? true
+				await VoiceChannels.Commands.VoiceInvite(interaction, channel, interaction.options.getMember('target'), bool)
+				break;
 			case "ban":
 				await VoiceChannels.Commands.VoiceBan(interaction, channel, interaction.options.getMember('target'))
 				break;
