@@ -1,5 +1,21 @@
-const { EmbedBuilder, Events, ChannelType, PermissionFlagsBits, channelLink } = require('discord.js');
+const { EmbedBuilder, Events, ChannelType, PermissionFlagsBits, SlashCommandSubcommandBuilder } = require('discord.js');
 const { VoiceChannels } = require('../utils');
+const VoiceCmd = require('../commands/utility/voice')
+
+function VoiceCommandsList()
+{
+	let voiceCmdBuilder = VoiceCmd.data
+	let voiceCmdId = process.disCmds.voice
+	let text = `## Список команд:`
+	voiceCmdBuilder.options.forEach(subcmd => {
+		if (!subcmd instanceof SlashCommandSubcommandBuilder)
+			return
+
+		text += `\n1. </voice ${subcmd.name}:${voiceCmdId}> - ${subcmd.description}`
+	})
+
+	return text
+}
 
 async function CreateVoice(oldState, newState, guildData) {
 	let member = newState.member
@@ -83,6 +99,8 @@ async function CreateVoice(oldState, newState, guildData) {
 
 		await textChannel.send({ embeds: [embed], allowedMentions: { repliedUser: false } })
 		VoiceChannels.UpdateMenu(textChannel, voiceChannel)
+
+		await textChannel.send( VoiceCommandsList() )
 
 		member.voice.setChannel(voiceChannel)
 		VoiceChannels.VoiceLog(voiceChannel, 'Создание комнаты', `Создатель: <@${member.id}>`, { iconURL: `https://i.imgur.com/Regjkt7.png`, color: `#0BDE00` })

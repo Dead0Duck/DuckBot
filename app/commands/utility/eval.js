@@ -23,7 +23,7 @@ module.exports = {
 				.setName('code')
 				.setDescription('Код для запуска')
 				.setRequired(true))
-		.setDefaultMemberPermissions(PermissionFlagsBits.ADMINISTRATOR)
+		.setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
 		.setDMPermission(false),
 	async execute(interaction) {
 		if (interaction.user.id !== process.env.DEV_ID) {

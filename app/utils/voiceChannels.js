@@ -42,7 +42,8 @@ async function UpdateMenu(channel, voiceChannel) {
 	voiceChannel = voiceChannel || channel && await GetVoiceChannel(channel)
 
 	const guild = channel.guild
-	let menu = await channel.messages.fetch({ limit: 1 })
+	let messages = await channel.messages.fetch()
+	let menu = messages.filter(msg => msg.content == "")
 	menu = menu.first()
 
 	const { GuildSchema } = process.mongo;
@@ -179,7 +180,7 @@ async function RandomOwner(channel, textChannel, channelMembers, guildData) {
 
 		UpdateMenu(textChannel, channel)
 		channel.send({ content: `<@${oldOwner.id}> покинул канал. Канал передан <@${newOwner.id}>`, allowedMentions: { users: [newOwner.id] } });
-		VoiceLog(channel, 'Отключение от канала', `Участник: <@${oldOwner.id}>\nНовый владелец: ${newOwner.id}`, { iconURL: `https://i.imgur.com/Tr9tWIZ.png`, color: `#980000` })
+		VoiceLog(channel, 'Отключение от канала', `Участник: <@${oldOwner.id}>\nНовый владелец: <@${newOwner.id}>`, { iconURL: `https://i.imgur.com/Tr9tWIZ.png`, color: `#980000` })
 	} catch (e) {
 		console.error(e)
 		return false
@@ -336,6 +337,36 @@ async function SetVoiceOwner(interaction, voiceChannel, newOwner) {
 	return true
 }
 
+async function VoiceInvite(interaction, voiceChannel, member, ping) {
+	if (member.user.bot) {
+		await interaction.reply({ content: `Нельзя приглашать ботов 💀`, ephemeral: true })
+		return true
+	}
+
+	if (member.voice?.channelId == voiceChannel.id) {
+		await interaction.reply({ content: `Пользователь <@${member.id}> уже здесь.`, ephemeral: true })
+		return true
+	}
+
+	let memberPerms = voiceChannel.permissionOverwrites.cache.get(member.id)
+	if (memberPerms?.allow.has(PermissionFlagsBits.ViewChannel)) {
+		await voiceChannel.send({ content: `Пользователь <@${member.id}> уже имеет доступ к каналу.`, allowedMentions: { users: [member.id] } })
+		return false
+	}
+
+	voiceChannel.permissionOverwrites.create(member.id, {
+		Connect: true,
+		ViewChannel: true,
+	})
+
+	if (ping)
+		member.user.send(`<@${interaction.user.id}> приглашает Вас в канал <#${voiceChannel.id}>!`).catch(e => console.error(e))
+
+	await interaction.reply({ content: `<@${member.id}> был приглашен в канал.`, allowedMentions: { users: [member.id] }, ephemeral: true })
+	VoiceLog(voiceChannel, 'Приглашение в канал', `Приглашен: <@${member.id}>`, { iconURL: `https://i.imgur.com/d9o4bPm.png`, color: `#8CDC26` })
+	return true
+}
+
 async function VoiceBan(interaction, voiceChannel, member) {
 	let voiceOwner = GetOwner(voiceChannel)
 	if (voiceOwner == member.id) {
@@ -437,6 +468,7 @@ module.exports = {
 	Commands: {
 		SetVoiceState,
 		SetVoiceOwner,
+		VoiceInvite,
 		VoiceBan,
 		VoiceKick,
 		SetVoiceName,
