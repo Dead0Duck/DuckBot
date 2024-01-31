@@ -4,6 +4,7 @@ module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('me')
 		.setDescription('РП: Действие от первого лица')
+		.setDMPermission(false)
 		.addStringOption(option =>
 			option
 				.setName('text')
