@@ -4,7 +4,7 @@ module.exports = {
     data: new SlashCommandBuilder()
         .setName('setwarns')
         .setDescription('Устанавливает количество варнов пользователю.')
-        .setDefaultMemberPermissions(PermissionsBitField.Flags.BanMembers)
+        .setDefaultMemberPermissions(PermissionsBitField.Flags.Administrator)
         .setDMPermission(false)
         .addUserOption(option =>
             option
@@ -44,8 +44,8 @@ module.exports = {
         if (!member.moderatable) {
             return await interaction.reply({ content: `У бота нет прав на установку количества варнов этого пользователя.`, ephemeral: true })
         }
-        if (counter > 3) {
-            return await interaction.reply({ content: 'Количество варнов не может быть более трёх.', ephemeral: true })
+        if (counter > 2) {
+            return await interaction.reply({ content: 'Установить количество варнов можно не более двух.', ephemeral: true })
         }
         if (counter < 0) {
             return await interaction.reply({ content: 'Число не может быть отрицательным.', ephemeral: true })

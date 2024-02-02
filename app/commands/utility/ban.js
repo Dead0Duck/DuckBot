@@ -2,11 +2,12 @@ const dayjs = require('dayjs');
 const { SlashCommandBuilder, PermissionsBitField } = require('discord.js');
 const { Moderation } = require('../../utils')
 
-async function ban(interaction, member, options, ms = null) {
+async function ban(interaction, member, options, ms = null, replyAndSend = 1) {
     const { GuildSchema } = process.mongo
     const unbanDate = ms ? dayjs().add(ms, 'ms') : null
     const unbanString = unbanDate ? `Разбан <t:${unbanDate.unix()}:R>` : ``
-    await member.send(`Вас забанили ${ms ? '' : 'навсегда '}на сервере "${interaction.guild.name}"\n\nКем: <@${interaction.user.id}>\nПричина: ${options.getString('reason')}\n${unbanString}`).catch(() => { })
+    if (replyAndSend)
+        await member.send(`Вас забанили ${ms ? '' : 'навсегда '}на сервере "${interaction.guild.name}"\n\nКем: <@${interaction.user.id}>\nПричина: ${options.getString('reason')}\n${unbanString}`).catch(() => { })
     member.ban({ reason: options.getString('reason') })
     const banData = await GuildSchema.findOne({ Guild: interaction.guild.id, Bans: { $elemMatch: { user: member.id } } }, { "Bans.$": 1 })
     if (!banData) {
@@ -19,7 +20,8 @@ async function ban(interaction, member, options, ms = null) {
             await GuildSchema.updateOne({ Guild: interaction.guild.id }, { $pull: { Bans: { user: member.id } } })
         }
     }
-    await interaction.reply({ content: `Пользователь <@${member.id}> был забанен${ms ? `. ${unbanString}.` : ' навсегда.'}[⠀](https://media1.tenor.com/m/inFUO9hugS8AAAAd/danganronpa-monokuma.gif)`, ephemeral: true })
+    if (replyAndSend)
+        await interaction.reply({ content: `Пользователь <@${member.id}> был забанен${ms ? `. ${unbanString}.` : ' навсегда.'}[⠀](https://media1.tenor.com/m/inFUO9hugS8AAAAd/danganronpa-monokuma.gif)`, ephemeral: true })
 }
 
 
@@ -88,4 +90,5 @@ module.exports = {
             console.error(e)
         }
     },
+    ban
 };

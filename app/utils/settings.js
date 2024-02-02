@@ -260,12 +260,13 @@ const Settings = [
     }, (guildSettings) => {
         return `${typeof guildSettings.WarnsPunish === 'undefined' ? "1 год" : ['перм', 'perm'].includes(guildSettings.WarnsPunish) ? "навсегда" : humanize(parseMSeconds(guildSettings.WarnsPunish))}`
     }, (interaction) => {
-        const ms = parseMSeconds(interaction.fields.getTextInputValue('warnspunish'))
+        const input = interaction.fields.getTextInputValue('warnspunish')
+        const ms = parseMSeconds(input)
         const errorText = "Убедитесь, что ввели продолжительность в таком формате [число][первая буква единицы времени] либо 'перм'"
         if (ms) {
             return ms < 60_000 ? 'Продолжительность не может быть менее минуты или отрицательным числом.' : 0
         } else {
-            return ['перм', 'perm'].includes(ms) ? 0 : errorText
+            return ['перм', 'perm'].includes(input) ? 0 : errorText
         }
     })
 ]

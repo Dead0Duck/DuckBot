@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, PermissionsBitField } = require('discord.js');
 const { Moderation } = require('../../utils');
+const dayjs = require('dayjs');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -61,6 +62,7 @@ module.exports = {
         try {
             member.timeout(ms, options.getString('reason'))
             await interaction.reply({ content: `Пользователю <@${member.id}> был выдан тайм-аут на ${Moderation.humanize(ms)}.`, ephemeral: true })
+            await member.send(`Вам был выдан тайм-аут на сервере "${interaction.guild.name}"\n\nКем: <@${interaction.user.id}>\nПричина: ${options.getString('reason')}\nСнятие ограничений <t:${dayjs().add(ms, 'ms').unix()}:R>`).catch(() => { })
         } catch (e) {
             console.error(e)
         }
