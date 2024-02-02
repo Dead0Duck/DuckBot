@@ -1,3 +1,4 @@
+const { EmbedBuilder } = require('discord.js')
 const dayjs = require('dayjs')
 const duration = require('dayjs/plugin/duration')
 const relativeTime = require('dayjs/plugin/relativeTime')
@@ -30,7 +31,7 @@ module.exports = {
         return parsedMSeconds
     },
     humanize: (ms) => {
-        return dayjs.duration(ms, 'ms').locale('ru').humanize()
+        return ms ? dayjs.duration(ms, 'ms').locale('ru').humanize() : 'навсегда'
     },
     defineJobs: async () => {
         const { AgendaScheduler, GuildSchema } = process.mongo
@@ -57,5 +58,26 @@ module.exports = {
             })
         })
         AgendaScheduler.every("1 minute", "UnbanWave")
+    },
+    log: async (interaction, title, desc, inputs, options = {}) => {
+        const { GuildSchema } = process.mongo;
+        const guildData = await GuildSchema.findOne({ Guild: interaction.guild.id })
+        if (!guildData || !guildData.Settings.ModerationLogs) return false
+        const logChannel = await interaction.guild.channels.fetch(guildData.Settings.ModerationLogs)
+
+        const embed = new EmbedBuilder({ description: desc, timestamp: Date.now() })
+            .setColor(options.color ? options.color : null)
+            .setAuthor({ name: title, iconURL: options.iconURL ? options.iconURL : null })
+        if (inputs.getString('reason'))
+            embed.addFields({ name: "Причина", value: inputs.getString('reason') })
+        if (options.duration)
+            embed.addFields({ name: "Длительность", value: options.duration })
+        if (inputs.getString('note'))
+            embed.addFields({ name: "Примечание", value: inputs.getString('note') })
+        if (options.id)
+            embed.addFields({ name: `ID`, value: options.id })
+
+        await logChannel.send({ embeds: [embed], allowedMentions: { repliedUser: false } })
+
     }
 }

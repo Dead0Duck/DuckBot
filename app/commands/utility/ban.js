@@ -24,7 +24,6 @@ async function ban(interaction, member, options, ms = null, replyAndSend = 1) {
         await interaction.reply({ content: `Пользователь <@${member.id}> был забанен${ms ? `. ${unbanString}.` : ' навсегда.'}[⠀](https://media1.tenor.com/m/inFUO9hugS8AAAAd/danganronpa-monokuma.gif)`, ephemeral: true })
 }
 
-
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('ban')
@@ -62,6 +61,7 @@ module.exports = {
     async execute(interaction) {
         const options = interaction.options
         const member = options.getMember('user')
+        const logArgs = [interaction, 'Блокировка', `<@${interaction.user.id}> забанил <@${member.id}>`, options]
         if (!member) {
             return await interaction.reply({ content: `Не удалось получить информацию о пользователе. Возможно он уже забанен либо вышел.`, ephemeral: true })
         }
@@ -78,14 +78,17 @@ module.exports = {
         if (!ms) {
             if (!['perm', 'перм'].includes(options.getString('duration')))
                 return await interaction.reply({ content: "Ошибка в аргументе продолжительности.", ephemeral: true })
-            else
-                return ban(interaction, member, options)
+            else {
+                ban(interaction, member, options)
+                return Moderation.log(...logArgs, { duration: 'навсегда', id: member.id, color: 'D10000', iconURL: 'https://i.imgur.com/07XrUj8.png' })
+            }
         }
         if (ms < 60_000) {
             return await interaction.reply({ content: "Продолжительность бана не может быть менее минуты.", ephemeral: true })
         }
         try {
-            return ban(interaction, member, options, ms)
+            ban(interaction, member, options, ms)
+            return Moderation.log(...logArgs, { duration: Moderation.humanize(ms), id: member.id, color: 'D10000', iconURL: 'https://i.imgur.com/07XrUj8.png' })
         } catch (e) {
             console.error(e)
         }

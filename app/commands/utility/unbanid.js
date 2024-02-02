@@ -1,5 +1,6 @@
 const dayjs = require('dayjs');
 const { SlashCommandBuilder, PermissionsBitField, ActionRowBuilder, ButtonBuilder, ButtonStyle, DiscordjsErrorCodes } = require('discord.js');
+const { Moderation } = require('../../utils');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -58,6 +59,7 @@ module.exports = {
                     if (!banData)
                         await GuildSchema.updateOne({ Guild: interaction.guild.id }, { $pull: { Bans: { user: userId } } })
                     await response.update({ content: `Пользователь разбанен.`, ephemeral: true, components: [] })
+                    Moderation.log(interaction, 'Разблокировка по ID', `<@${interaction.user.id}> разблокировал <@${userId}>.`, options, { id: userId, color: '00D12E', iconURL: 'https://i.imgur.com/UxWrpkr.png' })
                     return
                 case "declineBan":
                     return await interaction.deleteReply()

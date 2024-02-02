@@ -268,7 +268,19 @@ const Settings = [
         } else {
             return ['перм', 'perm'].includes(input) ? 0 : errorText
         }
-    })
+    }),
+
+    new SelectAutoSetting("Канал для логов модерации", "ModerationLogs", "Выбор канала для логов модерации",
+        () => {
+            const channelSelect = new ChannelSelectMenuBuilder()
+                .setMaxValues(1)
+                .setChannelTypes(ChannelType.GuildText)
+            return channelSelect
+        },
+        (guildSettings) => {
+            return `${typeof guildSettings.ModerationLogs === 'undefined' ? "не указан" : `<#${guildSettings.VoiceLogs}>`} `
+        }
+    ),
 ]
 
 const chunk = (arr, size) =>

@@ -75,6 +75,7 @@ module.exports = {
             }
             sendMemberWarn(member, counter, interaction, options)
             await interaction.reply({ content: `Пользователю <@${member.id}> было выдано ${humanCounter.get(counter)} предупреждение. ${counter > 2 ? `Пользователь получает${banDuration ? ` ` : ` перманентный `}бан. ${banDuration ? `Разбан <t:${dayjs().add(banDuration, 'ms').unix()}:R>` : ``}` : ``}`, ephemeral: true })
+            Moderation.log(interaction, `Выдача предупреждения${counter > 2 ? ` и бана` : ``}`, `<@${interaction.user.id}> выдал ${humanCounter.get(counter)} предупреждение пользователю <@${member.id}>.${counter > 2 ? ` Пользователь получает${banDuration ? ` ` : ` перманентный `}бан.` : ``}`, options, { duration: counter > 2 ? Moderation.humanize(banDuration) : null, id: member.id, color: counter > 2 ? `D10000` : `FFE500`, iconURL: counter > 2 ? `https://i.imgur.com/07XrUj8.png` : `https://i.imgur.com/taD5JK5.png` })
         } catch (e) {
             console.error(e)
         }

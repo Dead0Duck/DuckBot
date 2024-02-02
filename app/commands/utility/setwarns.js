@@ -1,4 +1,5 @@
 const { SlashCommandBuilder, PermissionsBitField } = require('discord.js');
+const { Moderation } = require('../../utils');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -60,7 +61,8 @@ module.exports = {
                 } else
                     await GuildSchema.updateOne({ Guild: interaction.guild.id, Warnings: { $elemMatch: { user: member.id } } }, { $set: { "Warnings.$[]": { user: member.id, counter: counter } } })
             }
-            await interaction.reply({ content: `Пользователю <@${member.id}> было установлено такое количество варнов: ${counter}`, ephemeral: true })
+            await interaction.reply({ content: `Пользователю <@${member.id}> было установлено ${[`0 варнов`, `1 варн`, `2 варна`][counter]}.`, ephemeral: true })
+            Moderation.log(interaction, 'Изменение счёта предупреждений', `<@${interaction.user.id}> установил пользователю <@${member.id}> ${[`0 варнов`, `1 варн`, `2 варна`][counter]}.`, options, { id: member.id, color: 'FFB800', iconURL: 'https://i.imgur.com/NeCLhK3.png' })
         } catch (e) {
             console.error(e)
         }
