@@ -1,5 +1,6 @@
 const { ChannelFlagsBitField, ButtonBuilder, ButtonStyle, ActionRowBuilder, EmbedBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, TextInputBuilder, ModalBuilder, TextInputStyle, ChannelType, RoleSelectMenuBuilder, UserSelectMenuBuilder, ChannelSelectMenuBuilder } = require('discord.js');
 const fs = require('fs');
+const { parseMSeconds, humanize } = require('./moderation')
 
 class BaseSetting {
     /**
@@ -244,6 +245,29 @@ const Settings = [
     }, (guildSettings) => {
         return `${typeof guildSettings.RegText === 'undefined' ? "не указан" : "указан"} `
     }) */
+
+    new TextInputSetting("Бан после трёх варнов", "WarnsPunish", (interaction, guildId, data) => {
+        return new ModalBuilder({
+            title: "Бан после трёх варнов", components: [
+                new ActionRowBuilder().addComponents(new TextInputBuilder()
+                    .setCustomId('warnspunish')
+                    .setLabel('Введите длительность бана')
+                    .setStyle(TextInputStyle.Short)
+                    .setMaxLength(25)
+                    .setPlaceholder("[число][c/м/ч/д/н/г] либо 'перм'"))
+            ]
+        })
+    }, (guildSettings) => {
+        return `${typeof guildSettings.WarnsPunish === 'undefined' ? "1 год" : ['перм', 'perm'].includes(guildSettings.WarnsPunish) ? "навсегда" : humanize(parseMSeconds(guildSettings.WarnsPunish))}`
+    }, (interaction) => {
+        const ms = parseMSeconds(interaction.fields.getTextInputValue('warnspunish'))
+        const errorText = "Убедитесь, что ввели продолжительность в таком формате [число][первая буква единицы времени] либо 'перм'"
+        if (ms) {
+            return ms < 60_000 ? 'Продолжительность не может быть менее минуты или отрицательным числом.' : 0
+        } else {
+            return ['перм', 'perm'].includes(ms) ? 0 : errorText
+        }
+    })
 ]
 
 const chunk = (arr, size) =>

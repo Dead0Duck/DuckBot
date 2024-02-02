@@ -56,9 +56,6 @@ module.exports = {
                 const result = await GuildSchema.updateMany({ Bans: { $elemMatch: { unban: { $lte: new Date() } } } }, { $pull: { Bans: { user: { $in: values.filter(value => value !== undefined) } } } })
             })
         })
-
-        await AgendaScheduler.start()
-        //AgendaScheduler.now("UnbanWave")
         AgendaScheduler.every("1 minute", "UnbanWave")
     }
 }

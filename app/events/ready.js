@@ -18,6 +18,10 @@ module.exports = {
 		await Parties.checkMany(client)
 		await Parties.checkAllParties(client)
 
+		const { AgendaScheduler } = process.mongo
+
+		await AgendaScheduler.start()
+
 		Moderation.defineJobs()
 
 		const guilds = client.guilds.cache.map(guild => guild);
