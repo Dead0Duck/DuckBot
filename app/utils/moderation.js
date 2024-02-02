@@ -75,7 +75,7 @@ module.exports = {
         if (inputs.getString('note'))
             embed.addFields({ name: "Примечание", value: inputs.getString('note') })
         if (options.id)
-            embed.addFields({ name: `ID`, value: options.id })
+            embed.addFields({ name: `ID пользователя`, value: options.id })
 
         await logChannel.send({ embeds: [embed], allowedMentions: { repliedUser: false } })
 

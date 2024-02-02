@@ -63,7 +63,7 @@ module.exports = {
             member.timeout(ms, options.getString('reason'))
             await interaction.reply({ content: `Пользователю <@${member.id}> был выдан тайм-аут на ${Moderation.humanize(ms)}.`, ephemeral: true })
             await member.send(`Вам был выдан тайм-аут на сервере "${interaction.guild.name}"\n\nКем: <@${interaction.user.id}>\nПричина: ${options.getString('reason')}\nСнятие ограничений <t:${dayjs().add(ms, 'ms').unix()}:R>`).catch(() => { })
-            Moderation.log(interaction, 'Выдача тайм-аута', `<@${interaction.user.id}> выдал тайм-аут пользоватлю <@${member.id}>`, options, { duration: Moderation.humanize(ms), id: member.id, color: 'E86F00', iconURL: 'https://i.imgur.com/axN5LZU.png' })
+            Moderation.log(interaction, 'Выдача тайм-аута', `<@${interaction.user.id}> выдал тайм-аут пользователю <@${member.id}>`, options, { duration: Moderation.humanize(ms), id: member.id, color: 'E86F00', iconURL: 'https://i.imgur.com/axN5LZU.png' })
         } catch (e) {
             console.error(e)
         }
