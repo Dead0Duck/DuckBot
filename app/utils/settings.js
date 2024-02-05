@@ -128,10 +128,12 @@ class TextInputSetting extends BaseSetting {
     })
      */
     constructor(label, field, modal, value, validate = () => { return 0 }, onSuccess = () => { }, onDelete = () => { }) {
-        super(label, field, onSuccess, onDelete)
+        super(label, field)
         this.modal = modal
         this.value = value
         this.validate = validate
+        this.onSuccess = onSuccess
+        this.onDelete = onDelete
         this.type = 'textInput'
     }
 }
