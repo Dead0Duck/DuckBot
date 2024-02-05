@@ -246,6 +246,67 @@ const Settings = [
     }, (guildSettings) => {
         return `${typeof guildSettings.RegText === 'undefined' ? "не указан" : "указан"} `
     }) */
+
+    new TextInputSetting("Количество ролей-разделителей", "RoleDividersCount", (interaction, guildId, data) => {
+        return new ModalBuilder({
+            title: "Роли-разделители", components: [
+                new ActionRowBuilder().addComponents(new TextInputBuilder()
+                    .setCustomId('rolesdividerscount')
+                    .setLabel('Количество')
+                    .setStyle(TextInputStyle.Short)
+                    .setMaxLength(1)
+                    .setValue(data || ""))
+            ]
+        })
+    }, (guildSettings) => {
+        return `${typeof guildSettings.RoleDividersCount === 'undefined' ? "не указано" : guildSettings.RoleDividersCount} `
+    }, (interaction) => {
+        const input = parseInt(interaction.fields.getTextInputValue('rolesdividerscount'))
+        if (isNaN(input)) {
+            return "Введённое значение не число"
+        }
+        if (input > 7) {
+            return "Разделителей не может быть более 7."
+        }
+        if (input === 0) {
+            return "Значение не может быть нулём."
+        }
+        return 0
+    }, async (interaction, guildId) => {
+        const { GuildSchema } = process.mongo
+        const guildData = await GuildSchema.findOne({ Guild: guildId })
+        const input = parseInt(interaction.fields.getTextInputValue('rolesdividerscount'))
+        const promises = []
+
+        if (guildData.RoleDividers?.length === input) { return }
+
+        if (guildData.RoleDividers?.length > input) {
+            const diff = guildData.RoleDividers?.length - input
+            guildData.RoleDividers.slice(-diff)
+                .forEach((role) => {
+                    interaction.guild.roles.fetch(role).then(role => role.delete())
+                })
+            guildData.RoleDividers.splice(-diff)
+            return guildData.save()
+        }
+        let index = guildData.RoleDividers?.length || 0
+        for (index; index < parseInt(input); index++) {
+            promises.push(interaction.guild.roles.create({ color: `232428`, hoist: false, name: `⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀` }).then(role => { return role.id }))
+        }
+        Promise.all(promises).then(async (ids) => {
+            await GuildSchema.updateOne({ Guild: guildId }, { RoleDividers: ids.concat(guildData.RoleDividers) })
+        })
+    }, async (interaction, guildId) => {
+        const { GuildSchema } = process.mongo
+        const guildData = await GuildSchema.findOne({ Guild: guildId })
+        guildData.RoleDividers.forEach((roleDivider) => {
+            interaction.guild.roles.fetch(roleDivider).then(role => {
+                role.delete().catch(() => { })
+            })
+        })
+        guildData.RoleDividers = undefined
+        guildData.save()
+    })
 ]
 
 const chunk = (arr, size) =>
