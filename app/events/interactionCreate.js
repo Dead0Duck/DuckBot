@@ -12,6 +12,8 @@ async function sendMessage(text, interaction) {
 	}
 }
 
+const reservedIds = ['md']
+
 module.exports = {
 	name: Events.InteractionCreate,
 	execute: async (interaction) => {
@@ -27,6 +29,7 @@ module.exports = {
 		}
 		else {
 			let id = interaction.customId.split(":")
+			if (reservedIds.includes(id[0])) { return }
 			command = interaction.client.interactions.get(id[0]);
 			if (!command) {
 				console.error(`No interaction matching ${interaction.customId} was found.`);
