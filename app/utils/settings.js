@@ -333,7 +333,7 @@ const Settings = [
         Promise.all(promises).then(async (ids) => {
             await GuildSchema.updateOne({ Guild: guildId }, { RoleDividers: ids.concat(guildData.RoleDividers) })
         })
-        // interaction.followUp({ content: "> ⚠️ Созданы новые роли. При изменении порядка, убедитесь, что роль бота выше пустых ролей. После того, как вы закончили, используйте команду /reassign", ephemeral: true })
+        interaction.followUp({ content: `> ⚠️ Созданы новые роли. При изменении порядка, убедитесь, что роль бота выше пустых ролей. После того, как вы закончили, используйте команду </reassign:${process.disCmds.reassign}>`, ephemeral: true })
     }, async (interaction, guildId) => {
         const { GuildSchema } = process.mongo
         const guildData = await GuildSchema.findOne({ Guild: guildId })
