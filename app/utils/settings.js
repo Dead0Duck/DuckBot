@@ -284,7 +284,7 @@ const Settings = [
             const diff = guildData.RoleDividers?.length - input
             guildData.RoleDividers.slice(-diff)
                 .forEach((role) => {
-                    interaction.guild.roles.fetch(role).then(role => role.delete())
+                    interaction.guild.roles.fetch(role).then(role => role && role.delete())
                 })
             guildData.RoleDividers.splice(-diff)
             return guildData.save()
@@ -296,12 +296,15 @@ const Settings = [
         Promise.all(promises).then(async (ids) => {
             await GuildSchema.updateOne({ Guild: guildId }, { RoleDividers: ids.concat(guildData.RoleDividers) })
         })
+        // interaction.followUp({ content: "> ⚠️ Созданы новые роли. При изменении порядка, убедитесь, что роль бота выше пустых ролей. После того, как вы закончили, используйте команду /reassign", ephemeral: true })
     }, async (interaction, guildId) => {
         const { GuildSchema } = process.mongo
         const guildData = await GuildSchema.findOne({ Guild: guildId })
         guildData.RoleDividers.forEach((roleDivider) => {
             interaction.guild.roles.fetch(roleDivider).then(role => {
-                role.delete().catch(() => { })
+                try {
+                    role.delete()
+                } catch (e) { }
             })
         })
         guildData.RoleDividers = undefined

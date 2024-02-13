@@ -1,5 +1,5 @@
 const { Events, ActivityType } = require('discord.js');
-const { GuildInitialize, Parties } = require('../utils')
+const { GuildInitialize, Parties, RoleDividers } = require('../utils')
 const { version } = require('../package.json');
 
 module.exports = {
@@ -22,6 +22,7 @@ module.exports = {
 		guilds.forEach(async guild => {
 			try {
 				await GuildInitialize.All(guild)
+				await RoleDividers.massiveReassign(guild)
 			} catch (e) {
 				console.error(e)
 			}
