@@ -3,5 +3,6 @@ module.exports = {
 	VoiceChannels: require('./voiceChannels'),
 	Settings: require('./settings'),
 	Parties: require('./parties'),
+	Moderation: require('./moderation'),
 	RoleDividers: require('./roleDividers')
 }

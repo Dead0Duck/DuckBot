@@ -44,13 +44,12 @@ module.exports = {
 						let content = ""
 						const validate = setting.validate(interaction)
 						if (validate !== 0) {
-							content = `Произошла ошибка:\n\`\`\`${validate}\`\`\``
+							await interaction.reply({ content: `Произошла ошибка: ${validate}`, ephemeral: true })
 						} else {
 							await GuildSchema.updateOne({ Guild: guildId }, { $set: { [`Settings.${setting.field}`]: interaction.fields.fields.size > 1 ? interaction.fields.fields.map((x) => { x.value }) : interaction.fields.fields.first().value } })
+							await interaction.reply({ content: `Параметр установлен.`, ephemeral: true })
 							setting.onSuccess(interaction, guildId)
-							content = `Параметр установлен.`
 						}
-						await interaction.reply({ content: content, ephemeral: true, components: [] })
 						return
 					case "selectAuto":
 					case "selectString":
