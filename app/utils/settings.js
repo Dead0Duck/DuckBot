@@ -280,7 +280,7 @@ const Settings = [
             return channelSelect
         },
         (guildSettings) => {
-            return `${typeof guildSettings.ModerationLogs === 'undefined' ? "не указан" : `<#${guildSettings.VoiceLogs}>`} `
+            return `${typeof guildSettings.ModerationLogs === 'undefined' ? "не указан" : `<#${guildSettings.ModerationLogs}>`} `
         }
     ),
 ]
