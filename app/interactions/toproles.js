@@ -16,7 +16,6 @@ module.exports = {
     id: interId,
     execute: async (interaction) => {
         const customId = interaction.customId.split(":")
-        if (customId[0] !== interId && customId.length < 2) return
         await interaction.guild.members.fetch({ force: true })
         if (customId[1] === 'selected') {
             interaction.reply({ ephemeral: true, embeds: [embedTop(interaction.roles)] })
