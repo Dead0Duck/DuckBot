@@ -325,7 +325,7 @@ module.exports = {
         const partyData = await PartySchema.findOne({ ThreadId: interaction.channel.id })
         switch (customId[1]) {
             case "deleteParty":
-                if (partyData && partyData.CreatorId === interaction.user.id || interaction.memberPermissions.has(PermissionsBitField.Flags.Administrator)) {
+                if (partyData && partyData.CreatorId === interaction.user.id || interaction.memberPermissions.has(PermissionsBitField.Flags.ManageMessages)) {
                     const deleteResponse = await interaction.reply({
                         content: "Вы точно хотите удалить?", components: [
                             new ActionRowBuilder({
@@ -358,7 +358,7 @@ module.exports = {
                 }
                 return
             case "finishParty":
-                if (partyData && partyData.CreatorId === interaction.user.id || interaction.memberPermissions.has(PermissionsBitField.Flags.Administrator)) {
+                if (partyData && partyData.CreatorId === interaction.user.id || interaction.memberPermissions.has(PermissionsBitField.Flags.ManageMessages)) {
                     const finishResponse = await interaction.reply({
                         content: "Вы уверены? Это действие необратимо.", components: [
                             new ActionRowBuilder({
@@ -392,7 +392,7 @@ module.exports = {
                 }
                 return
             case "editParty":
-                if (partyData && partyData.CreatorId === interaction.user.id || interaction.memberPermissions.has(PermissionsBitField.Flags.Administrator)) {
+                if (partyData && partyData.CreatorId === interaction.user.id || interaction.memberPermissions.has(PermissionsBitField.Flags.ManageMessages)) {
                     interaction.showModal(new ModalBuilder({
                         title: "Редактирование", custom_id: `${interId}:editModal`, components: formComponents(partyData.InputValues)
                     }))
