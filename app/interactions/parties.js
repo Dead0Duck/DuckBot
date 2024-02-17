@@ -453,8 +453,10 @@ module.exports = {
                     partyData.RoleMentionsId = mentions.roleMentions
                     partyData.save()
 
+                    const postScriptumEdit = mentionsConfirmation.user.id !== partyData.CreatorId ? `\n*Сообщение отредактировано пользователем* <@${mentionsConfirmation.user.id}>` : ``
+
                     webhookClient.editMessage(interaction.message, {
-                        content: messageParty(values, mentions.stringInvites, partNum, partyData.CreatorId, date), threadId: interaction.channel.id,
+                        content: messageParty(values, mentions.stringInvites, partNum, partyData.CreatorId, date) + postScriptumEdit, threadId: interaction.channel.id,
                     }).then(() => {
                         mentionsConfirmation.channel.edit({ name: values.activityName })
                     })
