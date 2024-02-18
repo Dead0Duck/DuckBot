@@ -503,15 +503,21 @@ module.exports = {
                 joinCd.set(interaction.user.id + interaction.channel.id, setTimeout(() => { joinCd.delete(interaction.user.id + interaction.channel.id) }, 60_000))
                 await interaction.deferReply({ ephemeral: true })
                 memberData = await interaction.guild.members.fetch({ user: interaction.member.id, force: true })
-                if (!memberData.roles.cache.hasAny(partyData.PartyRole)) {
-                    memberData.roles.add(partyData.PartyRole)
-                    interaction.deleteReply()
-                    interaction.channel.send(`<@${memberData.id}> присоединился к нашей компании!`)
-                } else {
-                    memberData.roles.remove(partyData.PartyRole)
-                    interaction.deleteReply()
-                    await interaction.channel.send(`<@${memberData.id}> ушел из нашей компании!`)
-                    interaction.channel.members.remove(memberData.id)
+                try {
+                    if (!memberData.roles.cache.hasAny(partyData.PartyRole)) {
+                        await memberData.roles.add(partyData.PartyRole)
+                        interaction.deleteReply()
+                        interaction.channel.send(`<@${memberData.id}> присоединился к нашей компании!`)
+                    } else {
+                        await memberData.roles.remove(partyData.PartyRole)
+                        interaction.deleteReply()
+                        await interaction.channel.send(`<@${memberData.id}> ушел из нашей компании!`)
+                        interaction.channel.members.remove(memberData.id)
+                    }
+                } catch (e) {
+                    if (e.code === 10011) return interaction.editReply('Не удалось добавить/удалить роль. Возможно она удалена.')
+                    interaction.editReply('Не удалось добавить/удалить роль.')
+                    console.error(e)
                 }
                 return
 
