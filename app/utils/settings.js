@@ -1,6 +1,6 @@
 const { ChannelFlagsBitField, ButtonBuilder, ButtonStyle, ActionRowBuilder, EmbedBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, TextInputBuilder, ModalBuilder, TextInputStyle, ChannelType, RoleSelectMenuBuilder, UserSelectMenuBuilder, ChannelSelectMenuBuilder } = require('discord.js');
-const fs = require('fs');
 const { parseMSeconds, humanize } = require('./moderation')
+const { partyFAQString } = require('./parties')
 
 class BaseSetting {
     /**
@@ -151,7 +151,6 @@ const Settings = [
             return `${typeof guildSettings.PartiesChannel === 'undefined' ? "не указан" : `<#${guildSettings.PartiesChannel}>`} `
         },
         (interaction, guildId) => {
-            const partyFAQString = fs.readFileSync('bigstrings/partyfaq.md').toString('utf-8');
             interaction.client.channels.fetch(interaction.values[0]).then((channel) => {
                 if (channel.flags.has(ChannelFlagsBitField.Flags.RequireTag))
                     return interaction.followUp({ content: 'Главная ветка не была создана из-за необходимости тега для публикации. Уберите в настройках форума это требование и переназначьте снова.', ephemeral: true })

@@ -1,3 +1,6 @@
+const fs = require('fs');
+const partyFAQString = fs.readFileSync('bigstrings/partyfaq.md').toString('utf-8');
+
 module.exports = {
     checkMany: async (client) => {
         const { GuildSchema } = process.mongo;
@@ -7,8 +10,19 @@ module.exports = {
         guildData.forEach(async (guildData) => {
             promises.push(client.guilds.fetch(guildData.Guild).then(
                 async (guild) => {
-                    if (!(guild.channels.cache.find(channel => channel.id === guildData.PartiesThread))) {
+                    const threadChannel = guild.channels.cache.find(channel => channel.id === guildData.PartiesThread)
+                    if (!threadChannel) {
                         return guild.id
+                    } else {
+                        try {
+                            starterMessage = await threadChannel.fetchStarterMessage()
+                            if (starterMessage.content !== partyFAQString) {
+                                await starterMessage.edit(partyFAQString)
+                            }
+                        } catch (e) {
+                            if (e.code === 10008) return guild.id
+                            console.error(e)
+                        }
                     }
                 }
             ))
@@ -61,5 +75,6 @@ module.exports = {
             }
         }
         )
-    }
+    },
+    partyFAQString
 }
