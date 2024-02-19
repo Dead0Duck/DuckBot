@@ -16,6 +16,8 @@ const Schema = new mongo.Schema({
 	PartiesWebhookToken: String,
 
 	Warnings: [{ user: String, counter: Number }],
-	Bans: [{ user: String, unban: Date }]
+	Bans: [{ user: String, unban: Date }],
+
+	RoleDividers: [String]
 });
 module.exports = mongo.model('guilds', Schema);
