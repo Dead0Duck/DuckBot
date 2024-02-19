@@ -8,5 +8,6 @@ const Schema = new mongo.Schema({
     PartNum: String,
     UserMentionsId: [String],
     RoleMentionsId: [String],
+    PartyRole: String,
 });
 module.exports = mongo.model('parties', Schema);
