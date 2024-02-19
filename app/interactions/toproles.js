@@ -21,7 +21,11 @@ module.exports = {
             interaction.reply({ ephemeral: true, embeds: [embedTop(interaction.roles)] })
         }
         if (customId[1] === 'all') {
-            interaction.reply({ ephemeral: true, embeds: [embedTop(interaction.guild.roles.cache.sort((a, b) => b.members.size - a.members.size).filter(role => role.id !== interaction.guild.id).first(10))] })
+            const { GuildSchema } = process.mongo
+            const { RoleDividers } = await GuildSchema.findOne({ Guild: interaction.guild.id }, { RoleDividers: 1 })
+            let roles = interaction.guild.roles.cache.sort((a, b) => b.members.size - a.members.size).filter(role => role.id !== interaction.guild.id)
+            if (RoleDividers.length) roles = roles.filter(role => !RoleDividers.includes(role.id))
+            interaction.reply({ ephemeral: true, embeds: [embedTop(roles.first(10))] })
         }
     }
 }
