@@ -8,7 +8,7 @@ module.exports = {
 		let guildId = oldChannel.guild.id
 		let guildData = await GuildSchema.findOne({ Guild: guildId })
 		if (!guildData) return
-		if (!VoiceChannels.IsVoiceChannel(newChannel)) return
+		if (!await VoiceChannels.IsVoiceChannel(newChannel)) return
 
 		if (oldChannel.name != newChannel.name) {
 			VoiceChannels.VoiceLog(newChannel, "Смена названия", `Старое название: ${oldChannel.name}`, { iconURL: `https://i.imgur.com/NeCLhK3.png`, color: `#FFB800` })
