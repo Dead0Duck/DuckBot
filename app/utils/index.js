@@ -4,5 +4,6 @@ module.exports = {
 	Settings: require('./settings'),
 	Parties: require('./parties'),
 	Moderation: require('./moderation'),
-	RoleDividers: require('./roleDividers')
+	RoleDividers: require('./roleDividers'),
+	Poll: require('./poll')
 }

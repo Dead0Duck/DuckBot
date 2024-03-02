@@ -2,7 +2,7 @@ require('dotenv').config()
 
 const fs = require('node:fs');
 const path = require('node:path');
-const { Client, Collection, Events, GatewayIntentBits } = require('discord.js');
+const { Client, Collection, Events, GatewayIntentBits, Partials } = require('discord.js');
 const token = process.env.TOKEN;
 
 const client = new Client({
@@ -10,9 +10,18 @@ const client = new Client({
 		GatewayIntentBits.Guilds,
 		GatewayIntentBits.GuildMembers,
 		GatewayIntentBits.GuildVoiceStates,
+		GatewayIntentBits.GuildMessages,
+		GatewayIntentBits.GuildMessageReactions,
+		GatewayIntentBits.MessageContent
+	],
+	partials: [
+		Partials.Message,
+		Partials.Channel,
+		Partials.Reaction,
+		Partials.User
 	],
 	rest: {
-		rejectOnRateLimit: (info) => { 
+		rejectOnRateLimit: (info) => {
 			return info.route == "/channels/:id";
 		},
 	},

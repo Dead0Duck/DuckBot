@@ -9,5 +9,6 @@ module.exports = {
 	GuildSchema: require('./models/Guild'),
 	UserSchema: require('./models/User'),
 	PartySchema: require('./models/Party'),
+	PollSchema: require('./models/Poll'),
 	AgendaScheduler: agenda
 }
