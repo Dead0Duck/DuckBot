@@ -1,5 +1,6 @@
 const { ChannelFlagsBitField, ButtonBuilder, ButtonStyle, ActionRowBuilder, EmbedBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, TextInputBuilder, ModalBuilder, TextInputStyle, ChannelType, RoleSelectMenuBuilder, UserSelectMenuBuilder, ChannelSelectMenuBuilder } = require('discord.js');
-const fs = require('fs');
+const { parseMSeconds, humanize } = require('./moderation')
+const { partyFAQString } = require('./parties')
 
 class BaseSetting {
     /**
@@ -128,10 +129,12 @@ class TextInputSetting extends BaseSetting {
     })
      */
     constructor(label, field, modal, value, validate = () => { return 0 }, onSuccess = () => { }, onDelete = () => { }) {
-        super(label, field, onSuccess, onDelete)
+        super(label, field)
         this.modal = modal
         this.value = value
         this.validate = validate
+        this.onSuccess = onSuccess
+        this.onDelete = onDelete
         this.type = 'textInput'
     }
 }
@@ -148,7 +151,6 @@ const Settings = [
             return `${typeof guildSettings.PartiesChannel === 'undefined' ? "не указан" : `<#${guildSettings.PartiesChannel}>`} `
         },
         (interaction, guildId) => {
-            const partyFAQString = fs.readFileSync('bigstrings/partyfaq.md').toString('utf-8');
             interaction.client.channels.fetch(interaction.values[0]).then((channel) => {
                 if (channel.flags.has(ChannelFlagsBitField.Flags.RequireTag))
                     return interaction.followUp({ content: 'Главная ветка не была создана из-за необходимости тега для публикации. Уберите в настройках форума это требование и переназначьте снова.', ephemeral: true })
@@ -244,6 +246,106 @@ const Settings = [
     }, (guildSettings) => {
         return `${typeof guildSettings.RegText === 'undefined' ? "не указан" : "указан"} `
     }) */
+
+    new TextInputSetting("Бан после трёх варнов", "WarnsPunish", (interaction, guildId, data) => {
+        return new ModalBuilder({
+            title: "Бан после трёх варнов", components: [
+                new ActionRowBuilder().addComponents(new TextInputBuilder()
+                    .setCustomId('warnspunish')
+                    .setLabel('Введите длительность бана')
+                    .setStyle(TextInputStyle.Short)
+                    .setMaxLength(25)
+                    .setPlaceholder("[число][c/м/ч/д/н/г] либо 'перм'"))
+            ]
+        })
+    }, (guildSettings) => {
+        return `${typeof guildSettings.WarnsPunish === 'undefined' ? "1 год" : ['перм', 'perm'].includes(guildSettings.WarnsPunish) ? "навсегда" : humanize(parseMSeconds(guildSettings.WarnsPunish))}`
+    }, (interaction) => {
+        const input = interaction.fields.getTextInputValue('warnspunish')
+        const ms = parseMSeconds(input)
+        const errorText = "Убедитесь, что ввели продолжительность в таком формате [число][первая буква единицы времени] либо 'перм'"
+        if (ms) {
+            return ms < 60_000 ? 'Продолжительность не может быть менее минуты или отрицательным числом.' : 0
+        } else {
+            return ['перм', 'perm'].includes(input) ? 0 : errorText
+        }
+    }),
+
+    new SelectAutoSetting("Канал для логов модерации", "ModerationLogs", "Выбор канала для логов модерации",
+        () => {
+            const channelSelect = new ChannelSelectMenuBuilder()
+                .setMaxValues(1)
+                .setChannelTypes(ChannelType.GuildText)
+            return channelSelect
+        },
+        (guildSettings) => {
+            return `${typeof guildSettings.ModerationLogs === 'undefined' ? "не указан" : `<#${guildSettings.ModerationLogs}>`} `
+        }
+    ),
+
+    new TextInputSetting("Количество ролей-разделителей", "RoleDividersCount", (interaction, guildId, data) => {
+        return new ModalBuilder({
+            title: "Роли-разделители", components: [
+                new ActionRowBuilder().addComponents(new TextInputBuilder()
+                    .setCustomId('rolesdividerscount')
+                    .setLabel('Количество')
+                    .setStyle(TextInputStyle.Short)
+                    .setMaxLength(1)
+                    .setValue(data || ""))
+            ]
+        })
+    }, (guildSettings) => {
+        return `${typeof guildSettings.RoleDividersCount === 'undefined' ? "не указано" : guildSettings.RoleDividersCount} `
+    }, (interaction) => {
+        const input = parseInt(interaction.fields.getTextInputValue('rolesdividerscount'))
+        if (isNaN(input)) {
+            return "Введённое значение не число"
+        }
+        if (input > 7) {
+            return "Разделителей не может быть более 7."
+        }
+        if (input === 0) {
+            return "Значение не может быть нулём."
+        }
+        return 0
+    }, async (interaction, guildId) => {
+        const { GuildSchema } = process.mongo
+        const guildData = await GuildSchema.findOne({ Guild: guildId })
+        const input = parseInt(interaction.fields.getTextInputValue('rolesdividerscount'))
+        const promises = []
+
+        if (guildData.RoleDividers?.length === input) { return }
+
+        if (guildData.RoleDividers?.length > input) {
+            const diff = guildData.RoleDividers?.length - input
+            guildData.RoleDividers.slice(-diff)
+                .forEach((role) => {
+                    interaction.guild.roles.fetch(role).then(role => role && role.delete())
+                })
+            guildData.RoleDividers.splice(-diff)
+            return guildData.save()
+        }
+        let index = guildData.RoleDividers?.length || 0
+        for (index; index < parseInt(input); index++) {
+            promises.push(interaction.guild.roles.create({ color: `232428`, hoist: false, name: `⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀` }).then(role => { return role.id }))
+        }
+        Promise.all(promises).then(async (ids) => {
+            await GuildSchema.updateOne({ Guild: guildId }, { RoleDividers: ids.concat(guildData.RoleDividers) })
+        })
+        interaction.followUp({ content: `> ⚠️ Созданы новые роли. При изменении порядка, убедитесь, что роль бота выше пустых ролей. После того, как вы закончили, используйте команду </reassign:${process.disCmds.reassign}>`, ephemeral: true })
+    }, async (interaction, guildId) => {
+        const { GuildSchema } = process.mongo
+        const guildData = await GuildSchema.findOne({ Guild: guildId })
+        guildData.RoleDividers.forEach((roleDivider) => {
+            interaction.guild.roles.fetch(roleDivider).then(role => {
+                try {
+                    role.delete()
+                } catch (e) { }
+            })
+        })
+        guildData.RoleDividers = undefined
+        guildData.save()
+    })
 ]
 
 const chunk = (arr, size) =>

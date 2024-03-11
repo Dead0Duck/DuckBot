@@ -1,12 +1,13 @@
 {
   "name": "duckbot",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "",
   "main": "index.js",
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "agenda": "^5.0.0",
     "body-parser": "^1.20.2",
     "dayjs": "^1.11.10",
     "discord.js": "^14.14.1",

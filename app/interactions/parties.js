@@ -4,6 +4,9 @@ const customParseFormat = require('dayjs/plugin/customParseFormat')
 const isBetween = require('dayjs/plugin/isBetween')
 dayjs.extend(customParseFormat)
 dayjs.extend(isBetween)
+const fs = require('fs')
+const adjectives = fs.readFileSync('bigstrings/adjectives.txt').toString('utf-8').split('\n')
+const nouns = fs.readFileSync('bigstrings/nouns.txt').toString('utf-8').split('\n')
 
 const interId = 'pt'
 
@@ -99,8 +102,9 @@ function validateDate(inputDate) {
  * @param {String} userId
  * @param {dayjs} date 
  */
-function messageParty(values, stringInvites, partNum, userId, date) {
+function messageParty(values, stringInvites, partNum, userId, date, roleId = null) {
     return `* \`👑 Организатор:\` <@${userId}>\n` +
+        (roleId ? `* \`🚩 Роль участников:\` <@&${roleId}>\n` : ``) +
         (`* \`👥 Количество участников:\` ${partNum ? partNum : `без ограничений`}\n`) +
         `* \`🕐 Дата и время сбора:\` <t:${date.unix()}>\n` +
         (values.requirement.length > 0 ? `* \`⚠️ Требования:\` ${escapeFormat(values.requirement)}\n` : '') +
@@ -154,6 +158,18 @@ function escapeFormat(string, skips = []) {
     }, string)
 }
 
+const joinCd = new Map()
+
+function randomRole() {
+    randomName = `${adjectives[Math.floor(Math.random() * adjectives.length)]} ${nouns[Math.floor(Math.random() * nouns.length)].toLowerCase()}`
+    let R = Math.floor((Math.random() * 127) + 127);
+    let G = Math.floor((Math.random() * 127) + 127);
+    let B = Math.floor((Math.random() * 127) + 127);
+    let rgb = (R << 16) + (G << 8) + B;
+    randomColor = rgb.toString(16)
+    return { randomName, randomColor }
+}
+
 module.exports = {
     id: interId,
     execute: async (interaction) => {
@@ -169,7 +185,7 @@ module.exports = {
             interaction.reply({ content: "Вебхук не найден. Переназначте форум в настройках.", ephemeral: true })
             return
         }
-        if (guildWebhook.channelId !== interaction.channel.parent.id) {
+        if (guildWebhook.channelId !== interaction.channel?.parent?.id) {
             guildWebhook.edit({ channel: interaction.channel.parent })
         }
         // Перед созданием party
@@ -271,23 +287,29 @@ module.exports = {
 
                             const { stringInvites, userMentions, roleMentions } = mentionsGen(inviteConfirmation.users, inviteConfirmation.roles, inviteConfirmation.user.id)
 
+                            const { randomName, randomColor } = randomRole()
+                            const partyRole = await inviteConfirmation.guild.roles.create({ name: randomName, mentionable: true, color: randomColor })
+                            inviteConfirmation.member.roles.add(partyRole)
+
                             await webhookClient.send({
                                 threadName: values.activityName, username: inviteConfirmation.member.nickname ? `${inviteConfirmation.member.nickname} (${inviteConfirmation.user.username})` : `${inviteConfirmation.user.username}`,
                                 avatarURL: inviteConfirmation.user.avatarURL(),
-                                content: messageParty(values, stringInvites, partNum, inviteConfirmation.user.id, date),
-                                components: [new ActionRowBuilder({
-                                    components: [
-                                        new ButtonBuilder({ custom_id: `${interId}:deleteParty`, label: "Удалить", style: ButtonStyle.Danger }),
-                                        new ButtonBuilder({ custom_id: `${interId}:editParty`, label: "Редактировать", style: ButtonStyle.Secondary }),
-                                        new ButtonBuilder({ custom_id: `${interId}:finishParty`, label: "Завершено", style: ButtonStyle.Success })
-                                    ]
-                                })]
+                                content: messageParty(values, stringInvites, partNum, inviteConfirmation.user.id, date, partyRole.id),
+                                components: [
+                                    new ActionRowBuilder({
+                                        components: [
+                                            new ButtonBuilder({ customId: `${interId}:joinOrLeave`, label: "Участвовать/выйти", style: ButtonStyle.Primary }),
+                                            new ButtonBuilder({ custom_id: `${interId}:deleteParty`, label: "Удалить", style: ButtonStyle.Danger }),
+                                            new ButtonBuilder({ custom_id: `${interId}:editParty`, label: "Редактировать", style: ButtonStyle.Secondary }),
+                                            new ButtonBuilder({ custom_id: `${interId}:finishParty`, label: "Завершено", style: ButtonStyle.Success })
+                                        ]
+                                    })]
                             })
                                 .then(async (thread) => {
                                     if (forumTag != null) {
                                         inviteConfirmation.channel.parent.threads.fetch(thread.id).then(channel => channel.setAppliedTags([forumTag]))
                                     }
-                                    await inviteConfirmation.update({ content: `Канал создан: <#${thread.id}>\nЖелаю хорошего совместного времяпровождения!`, components: [] })
+                                    await inviteConfirmation.update({ content: `Канал создан: <#${thread.id}>\nИспользуйте роль <@&${partyRole.id}> чтобы пинговать участников.\nЖелаю хорошего совместного времяпровождения!`, components: [] })
                                     const { PartySchema } = process.mongo;
                                     await PartySchema.create({
                                         ThreadId: thread.id,
@@ -296,7 +318,8 @@ module.exports = {
                                         InputValues: values,
                                         PartNum: partNum,
                                         UserMentionsId: userMentions,
-                                        RoleMentionsId: roleMentions
+                                        RoleMentionsId: roleMentions,
+                                        PartyRole: partyRole.id
                                     })
 
                                 }).catch(async (e) => {
@@ -325,7 +348,7 @@ module.exports = {
         const partyData = await PartySchema.findOne({ ThreadId: interaction.channel.id })
         switch (customId[1]) {
             case "deleteParty":
-                if (partyData && partyData.CreatorId === interaction.user.id || interaction.memberPermissions.has(PermissionsBitField.Flags.Administrator)) {
+                if (partyData && partyData.CreatorId === interaction.user.id || interaction.memberPermissions.has(PermissionsBitField.Flags.ManageMessages)) {
                     const deleteResponse = await interaction.reply({
                         content: "Вы точно хотите удалить?", components: [
                             new ActionRowBuilder({
@@ -341,6 +364,7 @@ module.exports = {
                         const customId = deleteConfirmation.customId.split(":")
                         if (customId[1] === 'deleteConfirm') {
                             deleteConfirmation.channel.delete()
+                            if (partyData.PartyRole) deleteConfirmation.guild.roles.delete(partyData.PartyRole).catch(() => { })
                             await PartySchema.deleteOne({ ThreadId: interaction.channel.id })
                             return
                         }
@@ -358,7 +382,7 @@ module.exports = {
                 }
                 return
             case "finishParty":
-                if (partyData && partyData.CreatorId === interaction.user.id || interaction.memberPermissions.has(PermissionsBitField.Flags.Administrator)) {
+                if (partyData && partyData.CreatorId === interaction.user.id || interaction.memberPermissions.has(PermissionsBitField.Flags.ManageMessages)) {
                     const finishResponse = await interaction.reply({
                         content: "Вы уверены? Это действие необратимо.", components: [
                             new ActionRowBuilder({
@@ -373,9 +397,14 @@ module.exports = {
                         const finishConfirmation = await finishResponse.awaitMessageComponent({ filter: collectorFilter, time: 30_000 })
                         const customId = finishConfirmation.customId.split(":")
                         if (customId[1] === 'finishConfirm') {
-                            webhookClient.editMessage(interaction.message, { content: interaction.message.content, components: [], threadId: interaction.channel.id })
+                            webhookClient.editMessage(interaction.message, {
+                                content:
+                                    messageParty(partyData.InputValues, mentionsGen(partyData.UserMentionsId, partyData.RoleMentionsId, finishConfirmation.user.id), partyData.PartNum, finishConfirmation.user.id, dayjs(partyData.StartDate)),
+                                components: [], threadId: interaction.channel.id
+                            })
                             interaction.deleteReply()
                             finishConfirmation.channel.setLocked(true)
+                            if (partyData.PartyRole) finishConfirmation.guild.roles.delete(partyData.PartyRole).catch(() => { })
                             await PartySchema.deleteOne({ ThreadId: interaction.channel.id })
                         }
                         if (customId[1] === 'finishCancel') {
@@ -392,7 +421,7 @@ module.exports = {
                 }
                 return
             case "editParty":
-                if (partyData && partyData.CreatorId === interaction.user.id || interaction.memberPermissions.has(PermissionsBitField.Flags.Administrator)) {
+                if (partyData && partyData.CreatorId === interaction.user.id || interaction.memberPermissions.has(PermissionsBitField.Flags.ManageMessages)) {
                     interaction.showModal(new ModalBuilder({
                         title: "Редактирование", custom_id: `${interId}:editModal`, components: formComponents(partyData.InputValues)
                     }))
@@ -402,7 +431,6 @@ module.exports = {
                 return
             case "editModal":
                 const values = {}
-                const defaultValuesMentions = [].concat(partyData.UserMentionsId, partyData.RoleMentionsId)
                 interaction.fields.fields.map((field) => { Object.assign(values, { [field.customId]: field.value }) })
                 let date
                 let partNum
@@ -453,8 +481,10 @@ module.exports = {
                     partyData.RoleMentionsId = mentions.roleMentions
                     partyData.save()
 
+                    const postScriptumEdit = mentionsConfirmation.user.id !== partyData.CreatorId ? `\n*Сообщение отредактировано пользователем* <@${mentionsConfirmation.user.id}>` : ``
+
                     webhookClient.editMessage(interaction.message, {
-                        content: messageParty(values, mentions.stringInvites, partNum, partyData.CreatorId, date), threadId: interaction.channel.id,
+                        content: messageParty(values, mentions.stringInvites, partNum, partyData.CreatorId, date, partyData.PartyRole) + postScriptumEdit, threadId: interaction.channel.id,
                     }).then(() => {
                         mentionsConfirmation.channel.edit({ name: values.activityName })
                     })
@@ -466,6 +496,31 @@ module.exports = {
                     else
                         console.error(e)
                 }
+                return
+            case "joinOrLeave":
+                if (interaction.user.id === partyData.CreatorId) return interaction.reply({ content: "Вы не можете уйти, являясь организатором.", ephemeral: true })
+                if (joinCd.has(interaction.user.id + interaction.channel.id)) return interaction.reply({ content: "Попробуйте снова через какое-то время.", ephemeral: true })
+                joinCd.set(interaction.user.id + interaction.channel.id, setTimeout(() => { joinCd.delete(interaction.user.id + interaction.channel.id) }, 60_000))
+                await interaction.deferReply({ ephemeral: true })
+                memberData = await interaction.guild.members.fetch({ user: interaction.member.id, force: true })
+                try {
+                    if (!memberData.roles.cache.hasAny(partyData.PartyRole)) {
+                        await memberData.roles.add(partyData.PartyRole)
+                        interaction.deleteReply()
+                        interaction.channel.send(`<@${memberData.id}> присоединился к нашей компании!`)
+                    } else {
+                        await memberData.roles.remove(partyData.PartyRole)
+                        interaction.deleteReply()
+                        await interaction.channel.send(`<@${memberData.id}> ушел из нашей компании!`)
+                        interaction.channel.members.remove(memberData.id)
+                    }
+                } catch (e) {
+                    if (e.code === 10011) return interaction.editReply('Не удалось добавить/удалить роль. Возможно она удалена.')
+                    interaction.editReply('Не удалось добавить/удалить роль.')
+                    console.error(e)
+                }
+                return
+
         }
     }
 }

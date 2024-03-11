@@ -189,8 +189,16 @@ module.exports = {
 			if (!guildData) {
 				await GuildSchema.create({
 					Guild: guild.id,
-					DataVersion: 1,
+					DataVersion: 2,
+					Warnings: Array[null],
+					Bans: Array[null]
 				})
+			}
+			if (guildData.DataVersion < 2) {
+				guildData.DataVersion = 2
+				guildData.Warnings = Array[null]
+				guildData.Bans = Array[null]
+				guildData.save()
 			}
 
 			if (await VoiceChannel(guild))

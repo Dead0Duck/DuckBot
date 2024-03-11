@@ -1,5 +1,5 @@
 const { Events, ActivityType } = require('discord.js');
-const { GuildInitialize, Parties } = require('../utils')
+const { GuildInitialize, Parties, Moderation, RoleDividers } = require('../utils')
 const { version } = require('../package.json');
 
 module.exports = {
@@ -18,10 +18,17 @@ module.exports = {
 		await Parties.checkMany(client)
 		await Parties.checkAllParties(client)
 
+		const { AgendaScheduler } = process.mongo
+
+		await AgendaScheduler.start()
+
+		Moderation.defineJobs()
+
 		const guilds = client.guilds.cache.map(guild => guild);
 		guilds.forEach(async guild => {
 			try {
 				await GuildInitialize.All(guild)
+				await RoleDividers.massiveReassign(guild)
 			} catch (e) {
 				console.error(e)
 			}
