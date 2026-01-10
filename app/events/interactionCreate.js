@@ -1,11 +1,11 @@
-const { Events } = require('discord.js');
+const { Events, MessageFlags } = require('discord.js');
 
 async function sendMessage(text, interaction) {
 	try {
 		if (interaction.replied || interaction.deferred) {
-			await interaction.followUp({ content: text, ephemeral: true });
+			await interaction.followUp({ content: text, flags: MessageFlags.Ephemeral });
 		} else {
-			await interaction.reply({ content: text, ephemeral: true });
+			await interaction.reply({ content: text, flags: MessageFlags.Ephemeral });
 		}
 	} catch (e) {
 		console.error(e)

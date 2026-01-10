@@ -1,4 +1,4 @@
-const { StringSelectMenuBuilder, StringSelectMenuOptionBuilder, ActionRowBuilder, ModalBuilder, LabelBuilder, TextInputBuilder, TextInputStyle } = require('discord.js')
+const { StringSelectMenuBuilder, StringSelectMenuOptionBuilder, ActionRowBuilder, ModalBuilder, LabelBuilder, TextInputBuilder, TextInputStyle, MessageFlags } = require('discord.js')
 const { VoiceChannels } = require('../utils');
 
 const interId = "voice"
@@ -48,7 +48,7 @@ module.exports = {
 				{
 					await interaction.reply({
 						content: 'В личном канале недостаточно человек для передачи прав.',
-						ephemeral: true,
+						flags: MessageFlags.Ephemeral,
 					});
 					return
 				}
@@ -59,7 +59,7 @@ module.exports = {
 				await interaction.reply({
 					content: 'Выберите нового владельца',
 					components: [row],
-					ephemeral: true,
+					flags: MessageFlags.Ephemeral,
 				});
 
 				break;
@@ -159,7 +159,7 @@ module.exports = {
 				{
 					await interaction.reply({
 						content: 'Список голосовых регионов недоступен. Пожалуйста, попробуйте позже.',
-						ephemeral: true,
+						flags: MessageFlags.Ephemeral,
 					});
 					return
 				}

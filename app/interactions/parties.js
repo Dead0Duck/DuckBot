@@ -1,4 +1,4 @@
-const { ActionRowBuilder, TextInputBuilder, ModalBuilder, TextInputStyle, ButtonBuilder, ButtonStyle, ComponentType, EmbedBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, DiscordjsErrorCodes, MentionableSelectMenuBuilder, WebhookClient, PermissionsBitField, Collection } = require('discord.js');
+const { ActionRowBuilder, TextInputBuilder, ModalBuilder, TextInputStyle, ButtonBuilder, ButtonStyle, ComponentType, EmbedBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, DiscordjsErrorCodes, MentionableSelectMenuBuilder, WebhookClient, PermissionsBitField, Collection, MessageFlags } = require('discord.js');
 const dayjs = require('dayjs')
 const customParseFormat = require('dayjs/plugin/customParseFormat')
 const isBetween = require('dayjs/plugin/isBetween')
@@ -182,7 +182,7 @@ module.exports = {
         if (customId[0] !== interId) { return }
         const guildWebhook = await interaction.guild.fetchWebhooks().then(webhooks => webhooks.find((webhook) => webhook.id === guildData.PartiesWebhookId))
         if (typeof guildWebhook === 'undefined') {
-            interaction.reply({ content: "Вебхук не найден. Переназначте форум в настройках.", ephemeral: true })
+            interaction.reply({ content: "Вебхук не найден. Переназначте форум в настройках.", flags: MessageFlags.Ephemeral })
             return
         }
         if (guildWebhook.channelId !== interaction.channel?.parent?.id) {
@@ -209,7 +209,7 @@ module.exports = {
                     if (typeof e != 'string') {
                         console.error(e)
                     }
-                    const retryResponse = await interaction.reply({ content: typeof e === 'string' ? e : "Что-то пошло не так :/", ephemeral: true, components: [restartRow], fetchReply: true })
+                    const retryResponse = await interaction.reply({ content: typeof e === 'string' ? e : "Что-то пошло не так :/", flags: MessageFlags.Ephemeral, components: [restartRow], fetchReply: true })
                     await retryResponse.awaitMessageComponent({ filter: collectorFilter, time: 300_000 }).then((confirmation) => {
                         interaction.deleteReply()
                         const customId = confirmation.customId.split(":")
@@ -219,8 +219,8 @@ module.exports = {
                                 title: "Поиск компании", custom_id: `${interId}:modal`, components: formComponents(values)
                             }))
                         }
-                    }).catch(async (e) => {
-                        await interaction.editReply({ content: typeof e === 'string' ? e : "Что-то пошло не так :/", ephemeral: true, components: [] })
+                        }).catch(async (e) => {
+                        await interaction.editReply({ content: typeof e === 'string' ? e : "Что-то пошло не так :/", flags: MessageFlags.Ephemeral, components: [] })
                         if (typeof e != 'string') {
                             console.error(e)
                         }
@@ -228,7 +228,7 @@ module.exports = {
                     return
                 }
                 const checkInfoResponse = await interaction.reply({
-                    content: `Проверьте введённые данные. Диалог закроется <t:${dayjs().add(timerMSeconds, 'milliseconds').unix()}:R>.`, ephemeral: true, embeds: [new EmbedBuilder({
+                    content: `Проверьте введённые данные. Диалог закроется <t:${dayjs().add(timerMSeconds, 'milliseconds').unix()}:R>.`, flags: MessageFlags.Ephemeral, embeds: [new EmbedBuilder({
                         fields: [{ name: "Название активности", value: values.activityName },
                         { name: "Количество участников", value: partNum < 1 ? "_без ограничений_" : partNum },
                         { name: "Дата и время сбора", value: `<t:${date.unix()}>` },
@@ -269,7 +269,7 @@ module.exports = {
                             } else {
                                 tagConfirmation = confirmation
                             }
-                            const inviteResponse = await tagConfirmation.update({
+                                const inviteResponse = await tagConfirmation.update({
                                 content: `Выберите тех, кого вы хотели бы пригласить. Диалог закроется <t:${dayjs().add(timerMSeconds, 'milliseconds').unix()}:R>.`, components: [
                                     new ActionRowBuilder({
                                         components: [
@@ -336,7 +336,7 @@ module.exports = {
                             break
                     }
 
-                }).catch(async (e) => {
+                    }).catch(async (e) => {
                     if (e.code === DiscordjsErrorCodes.InteractionCollectorError)
                         await interaction.editReply({ content: 'Вы настолько долго не отвечали, что бот пошел спать.', components: [], embeds: [] });
                     else
@@ -357,7 +357,7 @@ module.exports = {
                                     new ButtonBuilder({ custom_id: `${interId}:deleteCancel`, label: 'Отменить', style: ButtonStyle.Secondary })
                                 ]
                             })
-                        ], ephemeral: true, fetchReply: true
+                        ], flags: MessageFlags.Ephemeral, fetchReply: true
                     })
                     try {
                         const deleteConfirmation = await deleteResponse.awaitMessageComponent({ filter: collectorFilter, time: 30_000 })
@@ -377,8 +377,8 @@ module.exports = {
                         else
                             console.error(e)
                     }
-                } else {
-                    interaction.reply({ content: "У вас нет прав для этого.", ephemeral: true })
+                    } else {
+                    interaction.reply({ content: "У вас нет прав для этого.", flags: MessageFlags.Ephemeral })
                 }
                 return
             case "finishParty":
@@ -391,7 +391,7 @@ module.exports = {
                                     new ButtonBuilder({ custom_id: `${interId}:finishCancel`, label: 'Нет', style: ButtonStyle.Secondary })
                                 ]
                             })
-                        ], ephemeral: true, fetchReply: true
+                        ], flags: MessageFlags.Ephemeral, fetchReply: true
                     })
                     try {
                         const finishConfirmation = await finishResponse.awaitMessageComponent({ filter: collectorFilter, time: 30_000 })
@@ -417,7 +417,7 @@ module.exports = {
                             console.error(e)
                     }
                 } else {
-                    interaction.reply({ content: "У вас нет прав для этого.", ephemeral: true })
+                    interaction.reply({ content: "У вас нет прав для этого.", flags: MessageFlags.Ephemeral })
                 }
                 return
             case "editParty":
@@ -426,7 +426,7 @@ module.exports = {
                         title: "Редактирование", custom_id: `${interId}:editModal`, components: formComponents(partyData.InputValues)
                     }))
                 } else {
-                    interaction.reply({ content: "У вас нет прав для этого.", ephemeral: true })
+                    interaction.reply({ content: "У вас нет прав для этого.", flags: MessageFlags.Ephemeral })
                 }
                 return
             case "editModal":
@@ -441,7 +441,7 @@ module.exports = {
                     if (typeof e !== 'string') {
                         console.error(e)
                     }
-                    await interaction.reply({ content: typeof e === 'string' ? e : "Что-то пошло не так :/", ephemeral: true })
+                    await interaction.reply({ content: typeof e === 'string' ? e : "Что-то пошло не так :/", flags: MessageFlags.Ephemeral })
                     return
                 }
                 const mentionsResponse = await interaction.reply({
@@ -457,7 +457,7 @@ module.exports = {
                                 new ButtonBuilder({ custom_id: `${interId}:wipeEditInvite`, label: "Стереть", style: ButtonStyle.Danger })
                             ]
                         })
-                    ], fetchReply: true, ephemeral: true
+                    ], fetchReply: true, flags: MessageFlags.Ephemeral
                 })
                 try {
                     const mentionsConfirmation = await mentionsResponse.awaitMessageComponent({ filter: collectorFilter, time: timerMSeconds })
@@ -498,10 +498,10 @@ module.exports = {
                 }
                 return
             case "joinOrLeave":
-                if (interaction.user.id === partyData.CreatorId) return interaction.reply({ content: "Вы не можете уйти, являясь организатором.", ephemeral: true })
-                if (joinCd.has(interaction.user.id + interaction.channel.id)) return interaction.reply({ content: "Попробуйте снова через какое-то время.", ephemeral: true })
+                if (interaction.user.id === partyData.CreatorId) return interaction.reply({ content: "Вы не можете уйти, являясь организатором.", flags: MessageFlags.Ephemeral })
+                if (joinCd.has(interaction.user.id + interaction.channel.id)) return interaction.reply({ content: "Попробуйте снова через какое-то время.", flags: MessageFlags.Ephemeral })
                 joinCd.set(interaction.user.id + interaction.channel.id, setTimeout(() => { joinCd.delete(interaction.user.id + interaction.channel.id) }, 60_000))
-                await interaction.deferReply({ ephemeral: true })
+                await interaction.deferReply({ flags: MessageFlags.Ephemeral })
                 memberData = await interaction.guild.members.fetch({ user: interaction.member.id, force: true })
                 try {
                     if (!memberData.roles.cache.hasAny(partyData.PartyRole)) {

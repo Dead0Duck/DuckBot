@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, InteractionContextType } = require('discord.js');
+const { SlashCommandBuilder, InteractionContextType, MessageFlags } = require('discord.js');
 const { Settings } = require('../../utils')
 
 module.exports = {
@@ -15,6 +15,6 @@ module.exports = {
 
         const { embed, rows } = Settings.Components(guildData.Settings, interaction.guild)
 
-        await interaction.reply({ embeds: [embed], components: rows, ephemeral: true })
+        await interaction.reply({ embeds: [embed], components: rows, flags: MessageFlags.Ephemeral })
     },
 };

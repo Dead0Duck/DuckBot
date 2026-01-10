@@ -1,4 +1,4 @@
-const { ChannelFlagsBitField, ButtonBuilder, ButtonStyle, ActionRowBuilder, EmbedBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, TextInputBuilder, ModalBuilder, TextInputStyle, ChannelType, RoleSelectMenuBuilder, UserSelectMenuBuilder, ChannelSelectMenuBuilder } = require('discord.js');
+const { ChannelFlagsBitField, ButtonBuilder, ButtonStyle, ActionRowBuilder, EmbedBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, TextInputBuilder, ModalBuilder, TextInputStyle, ChannelType, RoleSelectMenuBuilder, UserSelectMenuBuilder, ChannelSelectMenuBuilder, MessageFlags } = require('discord.js');
 const { parseMSeconds, humanize } = require('./moderation')
 const { partyFAQString } = require('./parties')
 
@@ -32,9 +32,9 @@ class BooleanSetting extends BaseSetting {
      * @param {function (value, interaction, guildId)} onSuccess - Функция, которая выполняется при успешном апдейте параметра.
      * @param {function (interaction, guildId)} onDelete - Функция, которая выполняется при успешном удалении параметра.
      * @example
-     * new BooleanSetting("Хот-дог", "TestBoolean", "Вы хотите хот-дог?", "Да, очень хочу", "Нет, спасибо, я веган",
-        (value, interaction) => { interaction.followUp({ content: value === 'true' ? "🌭" : "Ок, мне больше достанется.", ephemeral: true }) },
-        (interaction) => { interaction.followUp("Печально, что вы так с хот-догом поступаете.") })
+      * new BooleanSetting("Хот-дог", "TestBoolean", "Вы хотите хот-дог?", "Да, очень хочу", "Нет, спасибо, я веган",
+      * (value, interaction) => { interaction.followUp({ content: value === 'true' ? "🌭" : "Ок, мне больше достанется.", flags: MessageFlags.Ephemeral }) },
+      * (interaction) => { interaction.followUp("Печально, что вы так с хот-догом поступаете.") })
      */
     constructor(label, field, description, trueLabel, falseLabel, onSuccess = () => { }, onDelete = () => { }) {
         super(label, field, description, onSuccess, onDelete)
@@ -153,7 +153,7 @@ const Settings = [
         (interaction, guildId) => {
             interaction.client.channels.fetch(interaction.values[0]).then((channel) => {
                 if (channel.flags.has(ChannelFlagsBitField.Flags.RequireTag))
-                    return interaction.followUp({ content: 'Главная ветка не была создана из-за необходимости тега для публикации. Уберите в настройках форума это требование и переназначьте снова.', ephemeral: true })
+                    return interaction.followUp({ content: 'Главная ветка не была создана из-за необходимости тега для публикации. Уберите в настройках форума это требование и переназначьте снова.', flags: MessageFlags.Ephemeral })
                 channel.threads.create({
                     name: "Хочешь найти компанию? Кликни на меня!", message: {
                         content: partyFAQString, components: [
@@ -175,7 +175,7 @@ const Settings = [
                                 guildData.PartiesWebhookId = webhook.id
                                 guildData.PartiesWebhookToken = webhook.token
                                 guildData.save()
-                                interaction.followUp({ content: '> ⚠️ Создан новый вебхук `DuckBot Parties`. Ни при каких обстоятельствах **не удаляйте и не изменяйте его**. В противном случае редактировать объявления **будет невозможно**.', ephemeral: true })
+                                interaction.followUp({ content: '> ⚠️ Создан новый вебхук `DuckBot Parties`. Ни при каких обстоятельствах **не удаляйте и не изменяйте его**. В противном случае редактировать объявления **будет невозможно**.', flags: MessageFlags.Ephemeral })
 
                             })
                         }
@@ -332,7 +332,7 @@ const Settings = [
         Promise.all(promises).then(async (ids) => {
             await GuildSchema.updateOne({ Guild: guildId }, { RoleDividers: ids.concat(guildData.RoleDividers) })
         })
-        interaction.followUp({ content: `> ⚠️ Созданы новые роли. При изменении порядка, убедитесь, что роль бота выше пустых ролей. После того, как вы закончили, используйте команду </reassign:${process.disCmds.reassign}>`, ephemeral: true })
+        interaction.followUp({ content: `> ⚠️ Созданы новые роли. При изменении порядка, убедитесь, что роль бота выше пустых ролей. После того, как вы закончили, используйте команду </reassign:${process.disCmds.reassign}>`, flags: MessageFlags.Ephemeral })
     }, async (interaction, guildId) => {
         const { GuildSchema } = process.mongo
         const guildData = await GuildSchema.findOne({ Guild: guildId })

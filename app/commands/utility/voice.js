@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, InteractionContextType } = require('discord.js');
+const { SlashCommandBuilder, InteractionContextType, MessageFlags } = require('discord.js');
 const { VoiceChannels } = require('../../utils');
 
 module.exports = {
@@ -80,15 +80,15 @@ module.exports = {
 		let state = member.voice;
 		let channel = state && state.channel
 		if (!channel)
-			return await interaction.reply({ content: `Вы не находитесь в голосовых чатах.`, ephemeral: true });
+			return await interaction.reply({ content: `Вы не находитесь в голосовых чатах.`, flags: MessageFlags.Ephemeral });
 
 		let isVoice = await VoiceChannels.IsVoiceChannel(channel)
 		if (!isVoice)
-			return await interaction.reply({ content: `Вы не находитесь в личном канале.`, ephemeral: true });
+			return await interaction.reply({ content: `Вы не находитесь в личном канале.`, flags: MessageFlags.Ephemeral });
 
 		let ownerId = VoiceChannels.GetOwner(channel)
 		if (member.id != ownerId)
-			return await interaction.reply({ content: `Вы не владелеете личным каналом.`, ephemeral: true });
+			return await interaction.reply({ content: `Вы не владелеете личным каналом.`, flags: MessageFlags.Ephemeral });
 
 
 		let cmd = interaction.options.getSubcommand();

@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionsBitField, InteractionContextType } = require('discord.js');
+const { SlashCommandBuilder, PermissionsBitField, InteractionContextType, MessageFlags } = require('discord.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -16,18 +16,18 @@ module.exports = {
         const options = interaction.options
         const member = options.getMember('user')
         if (!member) {
-            return await interaction.reply({ content: `Не удалось получить информацию о пользователе.`, ephemeral: true })
+            return await interaction.reply({ content: `Не удалось получить информацию о пользователе.`, flags: MessageFlags.Ephemeral })
         }
         const { GuildSchema } = process.mongo
         if (member.user.bot) {
-            return await interaction.reply({ content: `У ботов не могут быть никаких варнов.`, ephemeral: true })
+            return await interaction.reply({ content: `У ботов не могут быть никаких варнов.`, flags: MessageFlags.Ephemeral })
         }
         try {
             warnData = await GuildSchema.findOne({ Guild: interaction.guild.id, Warnings: { $elemMatch: { user: member.id } } }, { "Warnings.$": 1 })
             if (!warnData) {
-                await interaction.reply({ content: `У пользователя <@${member.id}> нету никаких варнов.`, ephemeral: true })
+                await interaction.reply({ content: `У пользователя <@${member.id}> нету никаких варнов.`, flags: MessageFlags.Ephemeral })
             } else {
-                await interaction.reply({ content: `У пользователя <@${member.id}> такое количество варнов: ${warnData.Warnings[0].counter}`, ephemeral: true })
+                await interaction.reply({ content: `У пользователя <@${member.id}> такое количество варнов: ${warnData.Warnings[0].counter}`, flags: MessageFlags.Ephemeral })
             }
         } catch (e) {
             console.error(e)

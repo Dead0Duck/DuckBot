@@ -1,5 +1,4 @@
-const { SlashCommandBuilder, ActionRowBuilder, RoleSelectMenuBuilder, ComponentType, ButtonBuilder, ButtonStyle } = require('discord.js');
-const { InteractionContextType } = require('discord.js');
+const { SlashCommandBuilder, ActionRowBuilder, RoleSelectMenuBuilder, ComponentType, ButtonBuilder, ButtonStyle, InteractionContextType, MessageFlags } = require('discord.js');
 const topRoles = require('../../interactions/toproles')
 
 module.exports = {
@@ -9,7 +8,7 @@ module.exports = {
         .setContexts([InteractionContextType.Guild]),
     async execute(interaction) {
         await interaction.reply({
-            content: 'Выберите интересующие Вас роли:', ephemeral: true, components: [
+            content: 'Выберите интересующие Вас роли:', flags: MessageFlags.Ephemeral, components: [
                 new ActionRowBuilder({
                     components: [
                         new RoleSelectMenuBuilder({ custom_id: `${topRoles.id}:selected`, max_values: 10 }),

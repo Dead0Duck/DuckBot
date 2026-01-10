@@ -1,5 +1,4 @@
-const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
-const { InteractionContextType } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, InteractionContextType, MessageFlags } = require('discord.js');
 
 const clean = async (text) => {
 	if (text && text.constructor.name == "Promise")
@@ -28,7 +27,7 @@ module.exports = {
 		.setContexts([InteractionContextType.Guild]),
 	async execute(interaction) {
 		if (interaction.user.id !== process.env.DEV_ID) {
-			await interaction.reply({ content: 'Nope\nhttps://media1.tenor.com/m/1HOfGCrKQLMAAAAC/sans-undertale.gif', ephemeral: true });
+			await interaction.reply({ content: 'Nope\nhttps://media1.tenor.com/m/1HOfGCrKQLMAAAAC/sans-undertale.gif', flags: MessageFlags.Ephemeral });
 			return;
 		}
 
@@ -45,6 +44,6 @@ module.exports = {
 			msg = `\`ERROR\` \`\`\`xl\n${cleaned}\n\`\`\``
 		}
 
-		await interaction.reply({ content: msg, ephemeral: true });
+		await interaction.reply({ content: msg, flags: MessageFlags.Ephemeral });
 	},
 };

@@ -1,5 +1,5 @@
 const dayjs = require('dayjs');
-const { SlashCommandBuilder, PermissionsBitField, InteractionContextType } = require('discord.js');
+const { SlashCommandBuilder, PermissionsBitField, InteractionContextType, MessageFlags } = require('discord.js');
 const { Moderation } = require('../../utils')
 
 async function ban(interaction, member, options, ms = null, replyAndSend = 1) {
@@ -21,7 +21,7 @@ async function ban(interaction, member, options, ms = null, replyAndSend = 1) {
         }
     }
     if (replyAndSend)
-        await interaction.reply({ content: `Пользователь <@${member.id}> был забанен${ms ? `. ${unbanString}.` : ' навсегда.'}[⠀](https://media1.tenor.com/m/inFUO9hugS8AAAAd/danganronpa-monokuma.gif)`, ephemeral: true })
+        await interaction.reply({ content: `Пользователь <@${member.id}> был забанен${ms ? `. ${unbanString}.` : ' навсегда.'}[⠀](https://media1.tenor.com/m/inFUO9hugS8AAAAd/danganronpa-monokuma.gif)`, flags: MessageFlags.Ephemeral })
 }
 
 module.exports = {
@@ -63,28 +63,28 @@ module.exports = {
         const member = options.getMember('user')
         const logArgs = [interaction, 'Блокировка', `<@${interaction.user.id}> забанил <@${member.id}>`, options]
         if (!member) {
-            return await interaction.reply({ content: `Не удалось получить информацию о пользователе. Возможно он уже забанен либо вышел.`, ephemeral: true })
+            return await interaction.reply({ content: `Не удалось получить информацию о пользователе. Возможно он уже забанен либо вышел.`, flags: MessageFlags.Ephemeral })
         }
         const ms = Moderation.parseMSeconds(options.getString('duration'))
         if (member.id === interaction.applicationId) {
-            return await interaction.reply({ content: "https://tenor.com/view/nope-team-fortress2-tf2-engineer-engineer-tf2-gif-24716491", ephemeral: true })
+            return await interaction.reply({ content: "https://tenor.com/view/nope-team-fortress2-tf2-engineer-engineer-tf2-gif-24716491", flags: MessageFlags.Ephemeral })
         }
         if (member.user.bot) {
-            return await interaction.reply({ content: `Вы действительно хотите наказать бота?`, ephemeral: true })
+            return await interaction.reply({ content: `Вы действительно хотите наказать бота?`, flags: MessageFlags.Ephemeral })
         }
         if (!member.moderatable) {
-            return await interaction.reply({ content: `У бота нет прав на блокировку этого пользователя.`, ephemeral: true })
+            return await interaction.reply({ content: `У бота нет прав на блокировку этого пользователя.`, flags: MessageFlags.Ephemeral })
         }
         if (!ms) {
-            if (!['perm', 'перм'].includes(options.getString('duration')))
-                return await interaction.reply({ content: "Ошибка в аргументе продолжительности.", ephemeral: true })
+                if (!['perm', 'перм'].includes(options.getString('duration')))
+                return await interaction.reply({ content: "Ошибка в аргументе продолжительности.", flags: MessageFlags.Ephemeral })
             else {
                 ban(interaction, member, options)
                 return Moderation.log(...logArgs, { duration: 'навсегда', id: member.id, color: 'D10000', iconURL: 'https://i.imgur.com/07XrUj8.png' })
             }
         }
         if (ms < 60_000) {
-            return await interaction.reply({ content: "Продолжительность бана не может быть менее минуты.", ephemeral: true })
+            return await interaction.reply({ content: "Продолжительность бана не может быть менее минуты.", flags: MessageFlags.Ephemeral })
         }
         try {
             ban(interaction, member, options, ms)

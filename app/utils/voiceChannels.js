@@ -1,4 +1,4 @@
-const { EmbedBuilder, PermissionFlagsBits, ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('discord.js');
+const { EmbedBuilder, PermissionFlagsBits, ButtonBuilder, ButtonStyle, ActionRowBuilder, MessageFlags } = require('discord.js');
 
 /* ========================================================================== */
 /*                              UTILITY FUNCTIONS                             */
@@ -297,7 +297,7 @@ async function SetVoiceState(interaction, voiceChannel, newState) {
 
 	await voiceChannel.permissionOverwrites.edit(everyoneId, newPerms)
 	await UpdateMenu(false, voiceChannel)
-	await interaction.reply({ content: `Канал теперь ${stateText[newState]}.`, ephemeral: true })
+	await interaction.reply({ content: `Канал теперь ${stateText[newState]}.`, flags: MessageFlags.Ephemeral })
 	// await VoiceEmojiName(voiceChannel)
 	VoiceLog(voiceChannel, 'Изменение канала', `Видимость канала: ${stateText[newState]}`, { iconURL: `https://i.imgur.com/KXzPGrU.png`, color: `#47C8FF` })
 	return true
@@ -305,13 +305,13 @@ async function SetVoiceState(interaction, voiceChannel, newState) {
 
 async function SetVoiceOwner(interaction, voiceChannel, newOwner) {
 	if (!newOwner.voice || newOwner.voice.channelId != voiceChannel.id) {
-		await interaction.reply({ content: `Пользователь должен находиться в этом личном канале.`, ephemeral: true })
+		await interaction.reply({ content: `Пользователь должен находиться в этом личном канале.`, flags: MessageFlags.Ephemeral })
 		return true
 	}
 
 	let voiceOwner = GetOwner(voiceChannel)
 	if (voiceOwner == newOwner.id) {
-		await interaction.reply({ content: `Этот пользователь уже владелеет этим каналов.`, ephemeral: true })
+		await interaction.reply({ content: `Этот пользователь уже владелеет этим каналов.`, flags: MessageFlags.Ephemeral })
 		return true
 	}
 
@@ -328,7 +328,7 @@ async function SetVoiceOwner(interaction, voiceChannel, newOwner) {
 	})
 
 	try {
-		await interaction.reply({ content: `Канал передан <@${newOwner.id}>.`, ephemeral: true })
+		await interaction.reply({ content: `Канал передан <@${newOwner.id}>.`, flags: MessageFlags.Ephemeral })
 	} catch (e) { }
 
 	let textChannel = await GetTextChannel(voiceChannel)
@@ -348,12 +348,12 @@ async function SetVoiceOwner(interaction, voiceChannel, newOwner) {
 
 async function VoiceInvite(interaction, voiceChannel, member, ping) {
 	if (member.user.bot) {
-		await interaction.reply({ content: `Нельзя приглашать ботов 💀`, ephemeral: true })
+		await interaction.reply({ content: `Нельзя приглашать ботов 💀`, flags: MessageFlags.Ephemeral })
 		return true
 	}
 
 	if (member.voice?.channelId == voiceChannel.id) {
-		await interaction.reply({ content: `Пользователь <@${member.id}> уже здесь.`, ephemeral: true })
+		await interaction.reply({ content: `Пользователь <@${member.id}> уже здесь.`, flags: MessageFlags.Ephemeral })
 		return true
 	}
 
@@ -371,7 +371,7 @@ async function VoiceInvite(interaction, voiceChannel, member, ping) {
 	if (ping)
 		member.user.send(`<@${interaction.user.id}> приглашает Вас в канал <#${voiceChannel.id}>!`).catch(e => console.error(e))
 
-	await interaction.reply({ content: `<@${member.id}> был приглашен в канал.`, allowedMentions: { users: [member.id] }, ephemeral: true })
+	await interaction.reply({ content: `<@${member.id}> был приглашен в канал.`, allowedMentions: { users: [member.id] }, flags: MessageFlags.Ephemeral })
 	VoiceLog(voiceChannel, 'Приглашение в канал', `Приглашен: <@${member.id}>`, { iconURL: `https://i.imgur.com/d9o4bPm.png`, color: `#8CDC26` })
 	return true
 }
@@ -379,7 +379,7 @@ async function VoiceInvite(interaction, voiceChannel, member, ping) {
 async function VoiceBan(interaction, voiceChannel, member) {
 	let voiceOwner = GetOwner(voiceChannel)
 	if (voiceOwner == member.id) {
-		await interaction.reply({ content: `Вы не можете забанить владельца.`, ephemeral: true })
+		await interaction.reply({ content: `Вы не можете забанить владельца.`, flags: MessageFlags.Ephemeral })
 		return true
 	}
 
@@ -393,26 +393,26 @@ async function VoiceBan(interaction, voiceChannel, member) {
 	if (!isBanned && voiceChannel.members.has(member.id))
 		member.voice.disconnect("Забанен в этом канале.")
 
-	await interaction.reply({ content: `<@${member.id}> был ${isBanned ? "разбанен" : "забанен"}.`, allowedMentions: { users: [member.id] }, ephemeral: true })
+	await interaction.reply({ content: `<@${member.id}> был ${isBanned ? "разбанен" : "забанен"}.`, allowedMentions: { users: [member.id] }, flags: MessageFlags.Ephemeral })
 	VoiceLog(voiceChannel, 'Бан в канале', `<@${member.id}> был ${isBanned ? "разбанен" : "забанен"}`, { iconURL: isBanned ? `https://i.imgur.com/H0JFOah.png` : `https://i.imgur.com/L5EWJTe.png`, color: isBanned ? `#00D12E` : `#D10000` })
 	return true
 }
 
 async function VoiceKick(interaction, voiceChannel, member) {
 	if (!member.voice || member.voice.channelId != voiceChannel.id) {
-		await interaction.reply({ content: `Пользователь должен находиться в этом личном канале.`, ephemeral: true })
+		await interaction.reply({ content: `Пользователь должен находиться в этом личном канале.`, flags: MessageFlags.Ephemeral })
 		return true
 	}
 
 	let voiceOwner = GetOwner(voiceChannel)
 	if (voiceOwner == member.id) {
-		await interaction.reply({ content: `Вы не можете выгнать владельца.`, ephemeral: true })
+		await interaction.reply({ content: `Вы не можете выгнать владельца.`, flags: MessageFlags.Ephemeral })
 		return true
 	}
 
 	member.voice.disconnect("Кикнут из канала.")
 
-	await interaction.reply({ content: `Кикаем <@${member.id}>.`, allowedMentions: { users: [member.id] }, ephemeral: true })
+	await interaction.reply({ content: `Кикаем <@${member.id}>.`, allowedMentions: { users: [member.id] }, flags: MessageFlags.Ephemeral })
 	VoiceLog(voiceChannel, 'Кик в канале', `Участник: <@${member.id}>`, { iconURL: `https://i.imgur.com/p7Fx3sA.png`, color: `#D10000` })
 	return true
 }
@@ -420,24 +420,24 @@ async function VoiceKick(interaction, voiceChannel, member) {
 async function SetVoiceName(interaction, voiceChannel, name) {
 	name = name && name.trim()
 	if (!name || name == "") {
-		await interaction.reply({ content: `Ошибка! Пустое название канала.`, ephemeral: true })
+		await interaction.reply({ content: `Ошибка! Пустое название канала.`, flags: MessageFlags.Ephemeral })
 		return false
 	}
 
 	try {
 		await voiceChannel.edit({ name })
 	} catch (e) {
-		await interaction.reply({ content: `Не удалось изменить название. Попробуйте позже!`, ephemeral: true })
+		await interaction.reply({ content: `Не удалось изменить название. Попробуйте позже!`, flags: MessageFlags.Ephemeral })
 		return false
 	}
-	await interaction.reply({ content: `Новое название канала: \`${name}\``, ephemeral: true })
+	await interaction.reply({ content: `Новое название канала: \`${name}\``, flags: MessageFlags.Ephemeral })
 	return true
 }
 
 async function SetVoiceNsfw(interaction, voiceChannel, nsfw) {
 	await voiceChannel.edit({ nsfw })
 	await UpdateMenu(false, voiceChannel)
-	await interaction.reply({ content: `Возрастное ограничение ${nsfw ? "включено" : "выключено"}`, ephemeral: true })
+	await interaction.reply({ content: `Возрастное ограничение ${nsfw ? "включено" : "выключено"}`, flags: MessageFlags.Ephemeral })
 	return true
 }
 
@@ -446,7 +446,7 @@ async function SetVoiceBitrate(interaction, voiceChannel, bitrate) {
 
 	await voiceChannel.edit({ bitrate: bitrate * 1000 })
 	await UpdateMenu(false, voiceChannel)
-	await interaction.reply({ content: `Битрейт теперь: ${bitrate} kbps`, ephemeral: true })
+	await interaction.reply({ content: `Битрейт теперь: ${bitrate} kbps`, flags: MessageFlags.Ephemeral })
 	return true
 }
 
@@ -455,7 +455,7 @@ async function SetVoiceUserLimit(interaction, voiceChannel, userLimit) {
 	await voiceChannel.edit({ userLimit })
 
 	let content = userLimit > 0 ? `Установлен лимит пользователей: ${userLimit}` : `Лимит пользователей убран`
-	await interaction.reply({ content, ephemeral: true })
+	await interaction.reply({ content, flags: MessageFlags.Ephemeral })
 
 	return true
 }
@@ -468,7 +468,7 @@ async function SetVoiceRegion(interaction, voiceChannel, rtcRegion)
 	{
 		await interaction.reply({
 			content: 'Список голосовых регионов недоступен. Пожалуйста, попробуйте позже.',
-			ephemeral: true,
+			flags: MessageFlags.Ephemeral,
 		});
 		return false
 	}
@@ -477,7 +477,7 @@ async function SetVoiceRegion(interaction, voiceChannel, rtcRegion)
 	{
 		await interaction.reply({
 			content: 'Указан неверный голосовой регион.',
-			ephemeral: true,
+			flags: MessageFlags.Ephemeral,
 		});
 		return false
 	}
@@ -485,7 +485,7 @@ async function SetVoiceRegion(interaction, voiceChannel, rtcRegion)
 	rtcRegion = rtcRegion == "auto" ? null : rtcRegion
 	await voiceChannel.edit({rtcRegion})
 	await UpdateMenu(false, voiceChannel)
-	await interaction.reply({ content: `Регион теперь: ${regions.get(rtcRegion)?.name || "Автоматический выбор"}`, ephemeral: true })
+	await interaction.reply({ content: `Регион теперь: ${regions.get(rtcRegion)?.name || "Автоматический выбор"}`, flags: MessageFlags.Ephemeral })
 	return true
 }
 
