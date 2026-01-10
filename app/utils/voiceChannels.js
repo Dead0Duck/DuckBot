@@ -467,7 +467,7 @@ async function SetVoiceRegion(interaction, voiceChannel, rtcRegion)
 	if (!regions || regions.size == 0)
 	{
 		await interaction.reply({
-			content: 'Список голосовых регионов недоступен. Пожалуйста, попробуйте позже.',
+			content: 'Список регионов недоступен. Пожалуйста, попробуйте позже.',
 			flags: MessageFlags.Ephemeral,
 		});
 		return false
@@ -476,7 +476,7 @@ async function SetVoiceRegion(interaction, voiceChannel, rtcRegion)
 	if (!regions.has(rtcRegion) && rtcRegion != "auto")
 	{
 		await interaction.reply({
-			content: 'Указан неверный голосовой регион.',
+			content: 'Указан неверный регион.',
 			flags: MessageFlags.Ephemeral,
 		});
 		return false

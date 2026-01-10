@@ -158,7 +158,7 @@ module.exports = {
 				if (!regions || regions.size == 0)
 				{
 					await interaction.reply({
-						content: 'Список голосовых регионов недоступен. Пожалуйста, попробуйте позже.',
+						content: 'Список регионов недоступен. Пожалуйста, попробуйте позже.',
 						flags: MessageFlags.Ephemeral,
 					});
 					return
