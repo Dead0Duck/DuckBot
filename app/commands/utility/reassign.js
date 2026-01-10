@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, InteractionContextType } = require('discord.js');
 const { RoleDividers } = require('../../utils')
 
 const cooldowns = new Map()
@@ -8,7 +8,7 @@ module.exports = {
         .setName('reassign')
         .setDescription('Обновить роли-разделители у всех участников сервера.')
         .setDefaultMemberPermissions(0)
-        .setDMPermission(false),
+        .setContexts([InteractionContextType.Guild]),
     async execute(interaction) {
         if (cooldowns.get(interaction.guild.id))
             return await interaction.reply({ content: "Команду можно использовать лишь раз в минуту.", ephemeral: true })

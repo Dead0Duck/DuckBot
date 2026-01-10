@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionsBitField } = require('discord.js');
+const { SlashCommandBuilder, PermissionsBitField, InteractionContextType } = require('discord.js');
 const { Moderation } = require('../../utils');
 const dayjs = require('dayjs');
 
@@ -7,7 +7,7 @@ module.exports = {
         .setName('timeout')
         .setDescription('Даёт таймаут указанному пользователю.')
         .setDefaultMemberPermissions(PermissionsBitField.Flags.MuteMembers)
-        .setDMPermission(false)
+        .setContexts([InteractionContextType.Guild])
         .addUserOption(option =>
             option
                 .setName("user")

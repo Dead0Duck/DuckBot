@@ -1,5 +1,5 @@
 const dayjs = require('dayjs');
-const { SlashCommandBuilder, PermissionsBitField, ActionRowBuilder, ButtonBuilder, ButtonStyle, DiscordjsErrorCodes } = require('discord.js');
+const { SlashCommandBuilder, PermissionsBitField, ActionRowBuilder, ButtonBuilder, ButtonStyle, DiscordjsErrorCodes, InteractionContextType } = require('discord.js');
 const { Moderation } = require('../../utils');
 
 module.exports = {
@@ -7,7 +7,7 @@ module.exports = {
         .setName('unbanid')
         .setDescription('Разблокировка пользователя по ID.')
         .setDefaultMemberPermissions(PermissionsBitField.Flags.BanMembers)
-        .setDMPermission(false)
+        .setContexts([InteractionContextType.Guild])
         .addStringOption(option =>
             option
                 .setName("id")

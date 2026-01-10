@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionsBitField } = require('discord.js');
+const { SlashCommandBuilder, PermissionsBitField, InteractionContextType } = require('discord.js');
 const { Moderation } = require('../../utils');
 
 module.exports = {
@@ -6,7 +6,7 @@ module.exports = {
         .setName('setwarns')
         .setDescription('Устанавливает количество варнов пользователю.')
         .setDefaultMemberPermissions(PermissionsBitField.Flags.Administrator)
-        .setDMPermission(false)
+        .setContexts([InteractionContextType.Guild])
         .addUserOption(option =>
             option
                 .setName("user")

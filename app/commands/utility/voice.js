@@ -1,11 +1,11 @@
-const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, InteractionContextType } = require('discord.js');
 const { VoiceChannels } = require('../../utils');
 
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('voice')
 		.setDescription('Взаимодействие с личным каналом.')
-		.setDMPermission(false)
+		.setContexts([InteractionContextType.Guild])
 		.addSubcommand(subcommand =>
 			subcommand
 				.setName('unlock')

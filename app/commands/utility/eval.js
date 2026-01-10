@@ -1,4 +1,5 @@
 const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
+const { InteractionContextType } = require('discord.js');
 
 const clean = async (text) => {
 	if (text && text.constructor.name == "Promise")
@@ -24,7 +25,7 @@ module.exports = {
 				.setDescription('Код для запуска')
 				.setRequired(true))
 		.setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
-		.setDMPermission(false),
+		.setContexts([InteractionContextType.Guild]),
 	async execute(interaction) {
 		if (interaction.user.id !== process.env.DEV_ID) {
 			await interaction.reply({ content: 'Nope\nhttps://media1.tenor.com/m/1HOfGCrKQLMAAAAC/sans-undertale.gif', ephemeral: true });

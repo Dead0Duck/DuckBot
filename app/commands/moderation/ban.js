@@ -1,5 +1,5 @@
 const dayjs = require('dayjs');
-const { SlashCommandBuilder, PermissionsBitField } = require('discord.js');
+const { SlashCommandBuilder, PermissionsBitField, InteractionContextType } = require('discord.js');
 const { Moderation } = require('../../utils')
 
 async function ban(interaction, member, options, ms = null, replyAndSend = 1) {
@@ -29,7 +29,7 @@ module.exports = {
         .setName('ban')
         .setDescription('Даёт бан указанному пользователю.')
         .setDefaultMemberPermissions(PermissionsBitField.Flags.BanMembers)
-        .setDMPermission(false)
+        .setContexts([InteractionContextType.Guild])
         .addUserOption(option =>
             option
                 .setName("user")

@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, InteractionContextType } = require('discord.js');
 const { Settings } = require('../../utils')
 
 module.exports = {
@@ -6,7 +6,7 @@ module.exports = {
         .setName('settings')
         .setDescription('Настройки сервера.')
         .setDefaultMemberPermissions(0)
-        .setDMPermission(false),
+        .setContexts([InteractionContextType.Guild]),
     async execute(interaction) {
         const { GuildSchema } = process.mongo;
 
