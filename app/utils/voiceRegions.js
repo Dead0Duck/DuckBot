@@ -12,9 +12,9 @@ async function refreshRegions()
 module.exports = {
     defineJobs: async () => {
         const { AgendaScheduler } = process.mongo
-        AgendaScheduler.define("VoiceRegionsUpdate", refreshRegions())
+        AgendaScheduler.define("VoiceRegionsUpdate", refreshRegions)
 
-        await AgendaScheduler.every("30 minutes", "VoiceRegionsUpdate", { skipImmediate: true })
+        await AgendaScheduler.every("5 minutes", "VoiceRegionsUpdate", { skipImmediate: true })
 		await refreshRegions()
 
 		console.log(`Voice regions updated: ${process.disClient?.voiceRegions.size} regions available`);
