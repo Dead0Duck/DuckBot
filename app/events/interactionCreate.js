@@ -1,11 +1,11 @@
-const { Events } = require('discord.js');
+const { Events, MessageFlags } = require('discord.js');
 
 async function sendMessage(text, interaction) {
 	try {
 		if (interaction.replied || interaction.deferred) {
-			await interaction.followUp({ content: text, ephemeral: true });
+			await interaction.followUp({ content: text, flags: MessageFlags.Ephemeral });
 		} else {
-			await interaction.reply({ content: text, ephemeral: true });
+			await interaction.reply({ content: text, flags: MessageFlags.Ephemeral });
 		}
 	} catch (e) {
 		console.error(e)
@@ -25,6 +25,21 @@ module.exports = {
 				console.error(`No command matching ${interaction.commandName} was found.`);
 				await sendMessage(`Команда \`${interaction.commandName}\` не найдена!`, interaction)
 				return;
+			}
+		}
+		else if (interaction.isAutocomplete()) {
+			command = interaction.client.commands.get(interaction.commandName);
+			if (!command) {
+				console.error(`No command matching ${interaction.commandName} was found for autocomplete.`);
+				return;
+			}
+
+			try {
+				await command.autocomplete(interaction);
+				return;
+			} catch (error) {
+				console.error(error);
+				return;	
 			}
 		}
 		else {

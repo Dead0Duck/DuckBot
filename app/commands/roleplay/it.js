@@ -1,10 +1,10 @@
-const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, InteractionContextType } = require('discord.js');
 
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('it')
 		.setDescription('РП: Действие от третьего лица')
-		.setDMPermission(false)
+		.setContexts([InteractionContextType.Guild])
 		.addStringOption(option =>
 			option
 				.setName('text')

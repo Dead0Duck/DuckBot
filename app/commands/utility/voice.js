@@ -1,11 +1,11 @@
-const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, InteractionContextType, MessageFlags } = require('discord.js');
 const { VoiceChannels } = require('../../utils');
 
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('voice')
 		.setDescription('Взаимодействие с личным каналом.')
-		.setDMPermission(false)
+		.setContexts([InteractionContextType.Guild])
 		.addSubcommand(subcommand =>
 			subcommand
 				.setName('unlock')
@@ -58,21 +58,37 @@ module.exports = {
 			subcommand
 				.setName('limit')
 				.setDescription('Изменить лимит пользователей в личном канале.')
-				.addIntegerOption(option => option.setName('limit').setDescription('Новое значение лимита (0 - выкл)').setMinValue(0).setMaxValue(99).setRequired(true))),
+				.addIntegerOption(option => option.setName('limit').setDescription('Новое значение лимита (0 - выкл)').setMinValue(0).setMaxValue(99).setRequired(true)))
+		.addSubcommand(subcommand => 
+			subcommand
+				.setName('region')
+				.setDescription('Изменить регион личного канала.')
+				.addStringOption(option => option.setName('region').setDescription('Новый регион (auto - Автовыбор)').setAutocomplete(true).setRequired(true))),
+	async autocomplete(interaction) {
+		const focusedOption = interaction.options.getFocused(true);
+		if (focusedOption.name !== 'region') return;
+
+		let val = focusedOption.value.toLowerCase()
+		const choices = [{id: "auto", name: "Автоматический выбор"}, ...process.disClient.voiceRegions.values()];
+		const filtered = choices.filter(choice => choice.name.toLowerCase().includes(val) || choice.id.toLowerCase().includes(val));
+		await interaction.respond(
+			filtered.map(choice => ({ name: choice.name, value: choice.id }))
+		);
+	},
 	async execute(interaction) {
 		let member = interaction.member;
 		let state = member.voice;
 		let channel = state && state.channel
 		if (!channel)
-			return await interaction.reply({ content: `Вы не находитесь в голосовых чатах.`, ephemeral: true });
+			return await interaction.reply({ content: `Вы не находитесь в голосовых чатах.`, flags: MessageFlags.Ephemeral });
 
 		let isVoice = await VoiceChannels.IsVoiceChannel(channel)
 		if (!isVoice)
-			return await interaction.reply({ content: `Вы не находитесь в личном канале.`, ephemeral: true });
+			return await interaction.reply({ content: `Вы не находитесь в личном канале.`, flags: MessageFlags.Ephemeral });
 
 		let ownerId = VoiceChannels.GetOwner(channel)
 		if (member.id != ownerId)
-			return await interaction.reply({ content: `Вы не владелеете личным каналом.`, ephemeral: true });
+			return await interaction.reply({ content: `Вы не владелеете личным каналом.`, flags: MessageFlags.Ephemeral });
 
 
 		let cmd = interaction.options.getSubcommand();
@@ -109,6 +125,9 @@ module.exports = {
 			case "limit":
 				await VoiceChannels.Commands.SetVoiceUserLimit(interaction, channel, interaction.options.getInteger('limit'))
 				break;
+			case "region":
+				await VoiceChannels.Commands.SetVoiceRegion(interaction, channel, interaction.options.getString('region'))
+				break;
 		}
-	},
+	}
 };

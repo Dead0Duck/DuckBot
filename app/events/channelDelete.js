@@ -7,6 +7,7 @@ async function checkPersonalVoice(channel, guildData) {
     if (channel.id == guildData.VoiceCreate || channel.id == guildData.VoiceCreateClosed) return
 
     const textChannel = await VoiceChannels.GetTextChannel(channel, guildData)
+    if (!textChannel) return
     try {
         await textChannel.delete()
     } catch (e) {

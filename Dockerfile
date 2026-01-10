@@ -1,4 +1,4 @@
-FROM node:18-alpine
+FROM node:22-alpine
 LABEL author="DeadDuck"
 LABEL org.opencontainers.image.source https://github.com/dead0duck/duckbot
 
