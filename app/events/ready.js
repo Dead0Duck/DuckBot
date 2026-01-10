@@ -1,5 +1,5 @@
 const { Events, ActivityType } = require('discord.js');
-const { GuildInitialize, Parties, Moderation, RoleDividers } = require('../utils')
+const { GuildInitialize, Parties, Moderation, VoiceRegions, RoleDividers } = require('../utils')
 const { version } = require('../package.json');
 
 module.exports = {
@@ -23,6 +23,7 @@ module.exports = {
 		await AgendaScheduler.start()
 
 		Moderation.defineJobs()
+		VoiceRegions.defineJobs()
 
 		const guilds = client.guilds.cache.map(guild => guild);
 		guilds.forEach(async guild => {

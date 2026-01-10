@@ -1,4 +1,4 @@
-const { StringSelectMenuBuilder, StringSelectMenuOptionBuilder, ActionRowBuilder, ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js')
+const { StringSelectMenuBuilder, StringSelectMenuOptionBuilder, ActionRowBuilder, ModalBuilder, LabelBuilder, TextInputBuilder, TextInputStyle } = require('discord.js')
 const { VoiceChannels } = require('../utils');
 
 const interId = "voice"
@@ -144,6 +144,57 @@ module.exports = {
 					.addComponents(limitInput));
 
 				await interaction.showModal(limitModal);
+				break;
+			case "region":
+				if (customId[2] == "set")
+				{
+					let region = interaction.fields.getStringSelectValues('region')[0] || "auto"
+
+					await VoiceChannels.Commands.SetVoiceRegion(interaction, voiceChannel, region)
+					return
+				}
+
+				let regions = interaction.client.voiceRegions
+				if (!regions || regions.size == 0)
+				{
+					await interaction.reply({
+						content: 'Список голосовых регионов недоступен. Пожалуйста, попробуйте позже.',
+						ephemeral: true,
+					});
+					return
+				}
+
+				let regionModal = new ModalBuilder()
+					.setCustomId(`${interId}:region:set`)
+					.setTitle('Изменение региона личной комнаты');
+
+				const regionSelect = new StringSelectMenuBuilder()
+					.setCustomId('region')
+					.setPlaceholder('Регион...')
+
+				regionSelect.addOptions(
+					new StringSelectMenuOptionBuilder()
+						.setLabel("Автоматический выбор")
+						.setValue("auto")
+						.setDefault(voiceChannel.rtcRegion === null)
+				)
+
+				regions.forEach(region => {
+					regionSelect.addOptions(
+						new StringSelectMenuOptionBuilder()
+							.setLabel(region.name)
+							.setValue(region.id)
+							.setDefault(voiceChannel.rtcRegion === region.id)
+					)
+				});
+
+				const regionsLabel = new LabelBuilder()
+					.setLabel("Выберите регион")
+					.setStringSelectMenuComponent(regionSelect);
+
+				regionModal.addComponents(regionsLabel);
+
+				await interaction.showModal(regionModal);
 				break;
 
 			default:

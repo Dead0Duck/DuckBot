@@ -58,7 +58,23 @@ module.exports = {
 			subcommand
 				.setName('limit')
 				.setDescription('Изменить лимит пользователей в личном канале.')
-				.addIntegerOption(option => option.setName('limit').setDescription('Новое значение лимита (0 - выкл)').setMinValue(0).setMaxValue(99).setRequired(true))),
+				.addIntegerOption(option => option.setName('limit').setDescription('Новое значение лимита (0 - выкл)').setMinValue(0).setMaxValue(99).setRequired(true)))
+		.addSubcommand(subcommand => 
+			subcommand
+				.setName('region')
+				.setDescription('Изменить регион личного канала.')
+				.addStringOption(option => option.setName('region').setDescription('Новый регион (auto - Автовыбор)').setAutocomplete(true).setRequired(true))),
+	async autocomplete(interaction) {
+		const focusedOption = interaction.options.getFocused(true);
+		if (focusedOption.name !== 'region') return;
+
+		let val = focusedOption.value.toLowerCase()
+		const choices = [{id: "auto", name: "Автоматический выбор"}, ...process.disClient.voiceRegions.values()];
+		const filtered = choices.filter(choice => choice.name.toLowerCase().includes(val) || choice.id.toLowerCase().includes(val));
+		await interaction.respond(
+			filtered.map(choice => ({ name: choice.name, value: choice.id }))
+		);
+	},
 	async execute(interaction) {
 		let member = interaction.member;
 		let state = member.voice;
@@ -109,6 +125,9 @@ module.exports = {
 			case "limit":
 				await VoiceChannels.Commands.SetVoiceUserLimit(interaction, channel, interaction.options.getInteger('limit'))
 				break;
+			case "region":
+				await VoiceChannels.Commands.SetVoiceRegion(interaction, channel, interaction.options.getString('region'))
+				break;
 		}
-	},
+	}
 };

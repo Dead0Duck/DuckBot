@@ -27,6 +27,21 @@ module.exports = {
 				return;
 			}
 		}
+		else if (interaction.isAutocomplete()) {
+			command = interaction.client.commands.get(interaction.commandName);
+			if (!command) {
+				console.error(`No command matching ${interaction.commandName} was found for autocomplete.`);
+				return;
+			}
+
+			try {
+				await command.autocomplete(interaction);
+				return;
+			} catch (error) {
+				console.error(error);
+				return;	
+			}
+		}
 		else {
 			let id = interaction.customId.split(":")
 			if (reservedIds.includes(id[0])) { return }

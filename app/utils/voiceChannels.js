@@ -124,13 +124,22 @@ async function UpdateMenu(channel, voiceChannel) {
 		.setLabel('Изменить битрейт')
 		.setEmoji('🎚️')
 		.setStyle(ButtonStyle.Primary))
+
+	buttons2.push(new ButtonBuilder()
+		.setCustomId('voice:region')
+		.setLabel('Изменить регион канала')
+		.setEmoji('🗺️')
+		.setStyle(ButtonStyle.Primary))
 	// BUTTONS END
+
+	const regions = channel.guild.client.voiceRegions;
 
 	const newEmbed = EmbedBuilder.from(embed)
 		.setDescription(`Комната: <#${channel.topic}>
 			Владелец: <@${ownerId}>
 			Создатель: <@${creatorId[1]}>
 
+			Регион: ${regions?.get(voiceChannel.rtcRegion)?.name || voiceChannel.rtcRegion || "Автоматический выбор"}
 			Битрейт: ${voiceChannel.bitrate / 1000} kbps
 			Возрастное ограничение: ${voiceChannel.nsfw ? "✅" : "❎"}
 
@@ -441,7 +450,6 @@ async function SetVoiceBitrate(interaction, voiceChannel, bitrate) {
 	return true
 }
 
-
 async function SetVoiceUserLimit(interaction, voiceChannel, userLimit) {
 	userLimit = Math.max(Math.min(userLimit, 99), 0)
 	await voiceChannel.edit({ userLimit })
@@ -449,6 +457,35 @@ async function SetVoiceUserLimit(interaction, voiceChannel, userLimit) {
 	let content = userLimit > 0 ? `Установлен лимит пользователей: ${userLimit}` : `Лимит пользователей убран`
 	await interaction.reply({ content, ephemeral: true })
 
+	return true
+}
+
+async function SetVoiceRegion(interaction, voiceChannel, rtcRegion)
+{
+	let client = interaction.client
+	let regions = client.voiceRegions
+	if (!regions || regions.size == 0)
+	{
+		await interaction.reply({
+			content: 'Список голосовых регионов недоступен. Пожалуйста, попробуйте позже.',
+			ephemeral: true,
+		});
+		return false
+	}
+
+	if (!regions.has(rtcRegion) && rtcRegion != "auto")
+	{
+		await interaction.reply({
+			content: 'Указан неверный голосовой регион.',
+			ephemeral: true,
+		});
+		return false
+	}
+
+	rtcRegion = rtcRegion == "auto" ? null : rtcRegion
+	await voiceChannel.edit({rtcRegion})
+	await UpdateMenu(false, voiceChannel)
+	await interaction.reply({ content: `Регион теперь: ${regions.get(rtcRegion)?.name || "Автоматический выбор"}`, ephemeral: true })
 	return true
 }
 
@@ -475,5 +512,6 @@ module.exports = {
 		SetVoiceNsfw,
 		SetVoiceBitrate,
 		SetVoiceUserLimit,
+		SetVoiceRegion,
 	},
 }
